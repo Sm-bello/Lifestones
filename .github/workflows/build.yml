@@ -23,7 +23,7 @@ jobs:
 
       - name: Install Android tools
         run: |
-          sdkmanager --install "build-tools;34.0.0" "platforms;android-36" 2>/dev/null
+          sdkmanager --install "build-tools;35.0.0" "platforms;android-35" 2>/dev/null
           AAPT2=$(find $ANDROID_SDK_ROOT -name "aapt2" -type f 2>/dev/null | head -1)
           sudo ln -sf "$AAPT2" /usr/bin/aapt2
 
@@ -37,7 +37,7 @@ jobs:
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/lifestones-release.jks
 
-      - name: FORCE RELEASE KEYSTORE (The Ultimate Fix)
+      - name: FORCE RELEASE KEYSTORE
         run: |
           echo "android.injected.signing.store.file=$(pwd)/android/app/lifestones-release.jks" >> android/gradle.properties
           echo "android.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }}" >> android/gradle.properties
@@ -46,8 +46,8 @@ jobs:
 
       - name: Fix project config
         run: |
-          sed -i 's/compileSdk = [0-9]*/compileSdk = 36/' android/app/build.gradle.kts
-          sed -i 's/minSdk = [0-9]*/minSdk = 26/' android/app/build.gradle.kts
+          sed -i 's/compileSdk = [0-9]*/compileSdk = 35/' android/app/build.gradle.kts
+          sed -i 's/minSdk = [0-9]*/minSdk = 21/' android/app/build.gradle.kts
           echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g" >> android/gradle.properties
           echo "android.useAndroidX=true" >> android/gradle.properties
           echo "android.enableJetifier=true" >> android/gradle.properties
