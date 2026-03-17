@@ -1,8 +1,8 @@
-name: Build Lifestones APK
+name: Build Lifestones Production APK
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
@@ -21,18 +21,27 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android tools and fix aapt2
+      - name: Install Android tools
         run: |
           sdkmanager --install "build-tools;34.0.0" "platforms;android-36" 2>/dev/null
           AAPT2=$(find $ANDROID_SDK_ROOT -name "aapt2" -type f 2>/dev/null | head -1)
           sudo ln -sf "$AAPT2" /usr/bin/aapt2
-          aapt2 version
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.41.4'
           channel: 'stable'
+
+      - name: Decode Keystore from Secrets
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/lifestones-release.jks
+          cat > android/key.properties << 'KEYEOF'
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          storeFile=lifestones-release.jks
+          KEYEOF
 
       - name: Fix project config
         run: |
@@ -43,41 +52,16 @@ jobs:
           echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g" >> android/gradle.properties
           echo "android.useAndroidX=true" >> android/gradle.properties
           echo "android.enableJetifier=true" >> android/gradle.properties
-
-      - name: Disable R8 minification
-        run: |
-          sed -i 's/isMinifyEnabled = true/isMinifyEnabled = false/' android/app/build.gradle.kts
-          sed -i 's/isShrinkResources = true/isShrinkResources = false/' android/app/build.gradle.kts
-
-      - name: Decode keystore
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/lifestones-release.jks
-
-      - name: Create key.properties
-        run: |
-          printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=lifestones-release.jks\n' \
-            '${{ secrets.KEYSTORE_PASSWORD }}' \
-            '${{ secrets.KEY_PASSWORD }}' \
-            '${{ secrets.KEY_ALIAS }}' \
-            > android/key.properties
+          sed -i '/^dependencies {/a\    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")' android/app/build.gradle.kts
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build Release APK
+      - name: Build and Sign Release APK
         run: flutter build apk --release --android-skip-build-dependency-validation
-
-      - name: Sign APK
-        run: |
-          $ANDROID_SDK_ROOT/build-tools/34.0.0/apksigner sign \
-            --ks android/app/lifestones-release.jks \
-            --ks-key-alias ${{ secrets.KEY_ALIAS }} \
-            --ks-pass pass:${{ secrets.KEYSTORE_PASSWORD }} \
-            --key-pass pass:${{ secrets.KEY_PASSWORD }} \
-            --out build/app/outputs/flutter-apk/Lifestones-signed.apk \
-            build/app/outputs/flutter-apk/app-release.apk
 
       - name: Upload Signed APK
         uses: actions/upload-artifact@v4
         with:
-          name: Lifestones-release-signed
-          path: build/app/outputs/flutter-apk/Lifestones-signed.apk 
+          name: Lifestones-Production-APK
+          path: build/app/outputs/flutter-apk/app-release.apk
