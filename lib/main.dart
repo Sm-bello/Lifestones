@@ -20,24 +20,28 @@ const kRed       = Color(0xFFD32F2F);
 const kCard      = Color(0xFFFFFFFF);
 const kSurface   = Color(0xFFF8F9FA);
 
+// EXACT ENGINE FROM YOUR FRIEND'S SCRIPT
+final _googleSignIn = GoogleSignIn(scopes: ['email']);
 final _auth = FirebaseAuth.instance;
-final AudioPlayer globalAudioPlayer = AudioPlayer(); // The MLP Audio Brain
+final AudioPlayer globalAudioPlayer = AudioPlayer(); 
 
 Future<void> initAudioSession() async {
   final session = await AudioSession.instance;
   await session.configure(const AudioSessionConfiguration.speech());
 }
 
+// EXACT LOGIC FROM YOUR FRIEND'S SCRIPT
 Future<User?> signInWithGoogle() async {
   try {
-    final googleSignIn = GoogleSignIn.instance;
-    final googleUser = await googleSignIn.authenticate();
+    final googleUser = await _googleSignIn.signIn();
     if (googleUser == null) return null;
-    
     final googleAuth = await googleUser.authentication;
-    final credential = GoogleAuthProvider.credential(idToken: googleAuth.idToken);
-    
-    return (await _auth.signInWithCredential(credential)).user;
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+    final result = await _auth.signInWithCredential(credential);
+    return result.user;
   } catch (e) {
     debugPrint('Sign-in error: $e');
     return null;
@@ -45,16 +49,15 @@ Future<User?> signInWithGoogle() async {
 }
 
 Future<void> signOut() async {
-  await globalAudioPlayer.stop(); // Stop audio on sign out
-  await GoogleSignIn.instance.signOut();
+  await globalAudioPlayer.stop(); 
+  await _googleSignIn.signOut();
   await _auth.signOut();
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  await GoogleSignIn.instance.initialize(); 
-  await initAudioSession(); // Initialize polite audio handling
+  await initAudioSession(); 
   
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(statusBarColor: kMilk, statusBarIconBrightness: Brightness.dark),
@@ -200,7 +203,6 @@ class _MainShellState extends State<MainShell> {
   @override
   void initState() {
     super.initState();
-    // Listen to the audio player state to show the player automatically
     globalAudioPlayer.playingStream.listen((playing) {
       if (playing && !_showMiniPlayer && mounted) {
         setState(() => _showMiniPlayer = true);
@@ -246,14 +248,9 @@ class _MainShellState extends State<MainShell> {
   Widget _buildMiniPlayer() {
     return Container(
       height: 68,
-      decoration: BoxDecoration(
-        color: kSurface,
-        border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.2))),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, -2))],
-      ),
+      decoration: BoxDecoration(color: kSurface, border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.2))), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, -2))]),
       child: Column(
         children: [
-          // Sleek MLP Progress Bar
           StreamBuilder<Duration>(
             stream: globalAudioPlayer.positionStream,
             builder: (context, snapshot) {
@@ -261,22 +258,13 @@ class _MainShellState extends State<MainShell> {
               final duration = globalAudioPlayer.duration ?? const Duration(milliseconds: 1);
               double progress = position.inMilliseconds / duration.inMilliseconds;
               if (progress.isNaN || progress.isInfinite) progress = 0.0;
-              return LinearProgressIndicator(
-                value: progress,
-                backgroundColor: Colors.transparent,
-                valueColor: const AlwaysStoppedAnimation<Color>(kGold),
-                minHeight: 2,
-              );
+              return LinearProgressIndicator(value: progress, backgroundColor: Colors.transparent, valueColor: const AlwaysStoppedAnimation<Color>(kGold), minHeight: 2);
             }
           ),
           Expanded(
             child: Row(
               children: [
-                Container(
-                  width: 64, height: 64,
-                  color: kGold.withOpacity(0.15),
-                  child: const Icon(Icons.music_note, color: kGold),
-                ),
+                Container(width: 64, height: 64, color: kGold.withOpacity(0.15), child: const Icon(Icons.music_note, color: kGold)),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -296,30 +284,15 @@ class _MainShellState extends State<MainShell> {
                     final playing = playerState?.playing;
                     
                     if (processingState == ProcessingState.loading || processingState == ProcessingState.buffering) {
-                      return const Padding(
-                        padding: EdgeInsets.all(12.0),
-                        child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: kGold, strokeWidth: 2)),
-                      );
+                      return const Padding(padding: EdgeInsets.all(12.0), child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: kGold, strokeWidth: 2)));
                     } else if (playing != true) {
-                      return IconButton(
-                        icon: const Icon(Icons.play_circle_fill, size: 36, color: kText),
-                        onPressed: globalAudioPlayer.play,
-                      );
+                      return IconButton(icon: const Icon(Icons.play_circle_fill, size: 36, color: kText), onPressed: globalAudioPlayer.play);
                     } else {
-                      return IconButton(
-                        icon: const Icon(Icons.pause_circle_filled, size: 36, color: kGold),
-                        onPressed: globalAudioPlayer.pause,
-                      );
+                      return IconButton(icon: const Icon(Icons.pause_circle_filled, size: 36, color: kGold), onPressed: globalAudioPlayer.pause);
                     }
                   },
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close, color: kTextLight),
-                  onPressed: () {
-                    globalAudioPlayer.stop();
-                    setState(() => _showMiniPlayer = false);
-                  },
-                ),
+                IconButton(icon: const Icon(Icons.close, color: kTextLight), onPressed: () { globalAudioPlayer.stop(); setState(() => _showMiniPlayer = false); }),
                 const SizedBox(width: 4),
               ],
             ),
@@ -351,7 +324,7 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
       }
       
       if (isWeakNetwork && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Weak network detected. Activating Audio-Only Data Saver Mode 📡'), backgroundColor: kGoldDark, duration: Duration(seconds: 4)));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Weak network detected. Activating Audio-Only Mode 📡'), backgroundColor: kGoldDark, duration: Duration(seconds: 4)));
       }
 
       var options = JitsiMeetConferenceOptions(
@@ -362,7 +335,7 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
       );
       
       var jitsiMeet = JitsiMeet();
-      await globalAudioPlayer.pause(); // Pause any playing sermons before joining live service!
+      await globalAudioPlayer.pause(); 
       await jitsiMeet.join(options);
     } catch (e) {
       debugPrint("Jitsi error: $e");
@@ -406,7 +379,6 @@ class DiscoverScreen extends StatelessWidget {
 
   void _playTestSermon(BuildContext context, String title) async {
     try {
-      // Free public domain audio URL for testing the engine
       final url = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"; 
       await globalAudioPlayer.setUrl(url);
       globalAudioPlayer.play();
@@ -463,11 +435,7 @@ class DiscoverScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              height: 160, width: 160,
-              decoration: BoxDecoration(color: kSurface, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.withOpacity(0.1))),
-              child: Center(child: Icon(icon, size: 40, color: kGold)), 
-            ),
+            Container(height: 160, width: 160, decoration: BoxDecoration(color: kSurface, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.withOpacity(0.1))), child: Center(child: Icon(icon, size: 40, color: kGold))),
             const SizedBox(height: 8),
             Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: kText), maxLines: 1, overflow: TextOverflow.ellipsis),
             Text(subtitle, style: const TextStyle(fontSize: 12, color: kGold), maxLines: 1, overflow: TextOverflow.ellipsis),

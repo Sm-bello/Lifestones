@@ -36,15 +36,13 @@ jobs:
       - name: Decode Keystore from Secrets
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/lifestones-release.jks
-          cat > android/key.properties << 'KEYEOF'
-          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
-          keyPassword=${{ secrets.KEY_PASSWORD }}
-          keyAlias=${{ secrets.KEY_ALIAS }}
-          storeFile=lifestones-release.jks
-          KEYEOF
 
-      - name: Reveal SHA Fingerprints (The Magic Trick)
-        run: keytool -list -v -keystore android/app/lifestones-release.jks -storepass "${{ secrets.KEYSTORE_PASSWORD }}" -alias "${{ secrets.KEY_ALIAS }}"
+      - name: FORCE RELEASE KEYSTORE (The Ultimate Fix)
+        run: |
+          echo "android.injected.signing.store.file=$(pwd)/android/app/lifestones-release.jks" >> android/gradle.properties
+          echo "android.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }}" >> android/gradle.properties
+          echo "android.injected.signing.key.alias=${{ secrets.KEY_ALIAS }}" >> android/gradle.properties
+          echo "android.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}" >> android/gradle.properties
 
       - name: Fix project config
         run: |
