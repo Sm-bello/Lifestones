@@ -35,13 +35,14 @@ jobs:
 
       - name: Regenerate Android project
         run: |
-          cp -r lib /tmp/lib_backup
-          cp pubspec.yaml /tmp/pubspec_backup.yaml
-          cp android/app/google-services.json /tmp/google-services.json 2>/dev/null || true
-          flutter create --project-name lifestones --org com.lifestones.church --platforms android .
           cp -r /tmp/lib_backup/* lib/
           cp /tmp/pubspec_backup.yaml pubspec.yaml
           cp /tmp/google-services.json android/app/google-services.json 2>/dev/null || true
+          flutter create --project-name lifestones --org com.lifestones.church .
+          cp /tmp/pubspec_backup.yaml pubspec.yaml
+          cp -r /tmp/lib_backup/. lib/
+          cp /tmp/gservices.json android/app/google-services.json 2>/dev/null || true
+          flutter pub get
 
       - name: Fix project config
         run: |
