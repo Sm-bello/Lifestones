@@ -46,8 +46,22 @@ class NotificationService {
 
   static Future<void> showClassReminder(String day) async {
     await _showLocal(
-      title: '⛪ \$day Class starts in 30 minutes',
+      title: '⛪ $day Class starts in 30 minutes',
       body: 'Lifestones discipleship class is about to begin. Get ready to join!',
+    );
+  }
+
+  static Future<void> sendMeetingStarted(String starterName) async {
+    await _showLocal(
+      title: '🔴 Class Started!',
+      body: '$starterName has started the class. Tap to join now!',
+    );
+  }
+
+  static Future<void> sendNewMessage(String senderName, String preview) async {
+    await _showLocal(
+      title: '💬 $senderName',
+      body: preview,
     );
   }
 }
