@@ -26,7 +26,6 @@ jobs:
           sdkmanager --install "build-tools;34.0.0" "platforms;android-36" 2>/dev/null
           AAPT2=$(find $ANDROID_SDK_ROOT -name "aapt2" -type f 2>/dev/null | head -1)
           sudo ln -sf "$AAPT2" /usr/bin/aapt2
-          aapt2 version
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -34,12 +33,21 @@ jobs:
           flutter-version: '3.41.4'
           channel: 'stable'
 
+      - name: Regenerate Android project
+        run: |
+          cp -r lib /tmp/lib_backup
+          cp pubspec.yaml /tmp/pubspec_backup.yaml
+          cp android/app/google-services.json /tmp/google-services.json 2>/dev/null || true
+          flutter create --project-name lifestones --org com.lifestones.church --platforms android .
+          cp -r /tmp/lib_backup/* lib/
+          cp /tmp/pubspec_backup.yaml pubspec.yaml
+          cp /tmp/google-services.json android/app/google-services.json 2>/dev/null || true
+
       - name: Fix project config
         run: |
           sed -i 's/compileSdk = [0-9]*/compileSdk = 36/' android/app/build.gradle.kts
           sed -i 's/minSdk = [0-9]*/minSdk = 26/' android/app/build.gradle.kts
-          sed -i 's/gradle-[0-9.]*-bin.zip/gradle-8.13-bin.zip/' android/gradle/wrapper/gradle-wrapper.properties
-          sed -i 's/id("com.android.application") version "[0-9.]*"/id("com.android.application") version "8.11.1"/' android/settings.gradle.kts
+          sed -i 's/targetSdk = [0-9]*/targetSdk = 36/' android/app/build.gradle.kts
           echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g" >> android/gradle.properties
           echo "android.useAndroidX=true" >> android/gradle.properties
           echo "android.enableJetifier=true" >> android/gradle.properties
@@ -49,7 +57,12 @@ jobs:
           sed -i 's/isMinifyEnabled = true/isMinifyEnabled = false/' android/app/build.gradle.kts
           sed -i 's/isShrinkResources = true/isShrinkResources = false/' android/app/build.gradle.kts
           sed -i '/compileOptions {/a\        isCoreLibraryDesugaringEnabled = true' android/app/build.gradle.kts
-          sed -i '/^dependencies {/a\    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")' android/app/build.gradle.kts
+          sed -i '/^    dependencies {/a\        coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")' android/app/build.gradle.kts
+
+      - name: Add Firebase to build files
+        run: |
+          sed -i '/^plugins {/a\    id("com.google.gms.google-services")' android/app/build.gradle.kts
+          sed -i '/^plugins {/a\    id("com.google.gms.google-services") version "4.4.0" apply false' android/settings.gradle.kts
 
       - name: Decode keystore
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/lifestones-release.jks
@@ -63,10 +76,6 @@ jobs:
             > android/key.properties
 
       - name: Install dependencies
-      - name: Refresh Android project
-        run: |
-          flutter create --project-name lifestones --platforms android --org com.example . 2>/dev/null || true
-          git checkout pubspec.yaml lib/
         run: flutter pub get
 
       - name: Build Release APK
