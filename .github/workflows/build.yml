@@ -65,9 +65,11 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build and Sign Release APK
+      - name: Build Release APK
+        run: flutter build apk --release --android-skip-build-dependency-validation
+
+      - name: Sign APK
         run: |
-          flutter build apk --release --android-skip-build-dependency-validation
           $ANDROID_SDK_ROOT/build-tools/34.0.0/apksigner sign \
             --ks android/app/lifestones-release.jks \
             --ks-key-alias ${{ secrets.KEY_ALIAS }} \
