@@ -39,6 +39,7 @@ jobs:
           cp pubspec.yaml /tmp/backup/
           cp -r lib/. /tmp/backup/lib/
           cp android/app/google-services.json /tmp/backup/ 2>/dev/null || echo "no gservices"
+          cp ci/build.gradle.kts /tmp/backup/
 
       - name: Delete old Android folder
         run: rm -rf android ios linux macos web windows
@@ -46,138 +47,12 @@ jobs:
       - name: Create fresh Flutter project
         run: flutter create --project-name lifestones --org com.lifestones.church .
 
-      - name: Restore source files
+      - name: Restore source and gradle files
         run: |
           cp /tmp/backup/pubspec.yaml .
           cp -r /tmp/backup/lib/. lib/
           cp /tmp/backup/google-services.json android/app/ 2>/dev/null || echo "no gservices"
-
-      - name: Fix all gradle files with Python
-        run: |
-          python3 << 'PYEOF'
-          import re
-
-          # ── Fix app/build.gradle.kts ──────────────────
-          with open('android/app/build.gradle.kts', 'r') as f:
-              lines = f.readlines()
-
-          new_lines = []
-          inside_android = False
-          inside_compile_options = False
-          deps_added = False
-
-          for i, line in enumerate(lines):
-              stripped = line.strip()
-
-              # Fix SDK versions
-              if re.match(r'\s*compileSdk\s*=', line):
-                  line = re.sub(r'compileSdk\s*=\s*\S+', 'compileSdk = 36', line)
-              elif re.match(r'\s*minSdk\s*=', line):
-                  line = re.sub(r'minSdk\s*=\s*\S+', 'minSdk = 26', line)
-              elif re.match(r'\s*targetSdk\s*=', line):
-                  line = re.sub(r'targetSdk\s*=\s*\S+', 'targetSdk = 36', line)
-
-              # Disable minify
-              elif 'isMinifyEnabled = true' in line:
-                  line = line.replace('isMinifyEnabled = true', 'isMinifyEnabled = false')
-              elif 'isShrinkResources = true' in line:
-                  line = line.replace('isShrinkResources = true', 'isShrinkResources = false')
-
-              # Add desugaring inside compileOptions
-              elif 'compileOptions {' in line:
-                  new_lines.append(line)
-                  new_lines.append('        isCoreLibraryDesugaringEnabled = true\n')
-                  continue
-
-              # Add desugar dependency - only to TOP LEVEL dependencies block
-              elif stripped == 'dependencies {' and not deps_added:
-                  new_lines.append(line)
-                  new_lines.append('    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")\n')
-                  deps_added = True
-                  continue
-
-              new_lines.append(line)
-
-          # Add Firebase plugin to plugins block
-          result = ''.join(new_lines)
-          if 'com.google.gms.google-services' not in result:
-              result = result.replace(
-                  'plugins {',
-                  'plugins {\n    id("com.google.gms.google-services")',
-                  1
-              )
-
-          with open('android/app/build.gradle.kts', 'w') as f:
-              f.write(result)
-
-          print("app/build.gradle.kts DONE")
-
-          # ── Fix settings.gradle.kts ───────────────────
-          with open('android/settings.gradle.kts', 'r') as f:
-              content = f.read()
-
-          if 'com.google.gms.google-services' not in content:
-              content = content.replace(
-                  'plugins {',
-                  'plugins {\n    id("com.google.gms.google-services") version "4.4.0" apply false',
-                  1
-              )
-
-          with open('android/settings.gradle.kts', 'w') as f:
-              f.write(content)
-
-          print("settings.gradle.kts DONE")
-
-          # ── Fix gradle.properties ─────────────────────
-          with open('android/gradle.properties', 'a') as f:
-              f.write('\norg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g\n')
-              f.write('android.useAndroidX=true\n')
-              f.write('android.enableJetifier=true\n')
-
-          print("gradle.properties DONE")
-          print("All gradle files fixed!")
-          PYEOF
-
-      - name: Decode keystore
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/lifestones-release.jks
-
-      - name: Create key.properties
-        run: |
-          printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=lifestones-release.jks\n' \
-            '${{ secrets.KEYSTORE_PASSWORD }}' \
-            '${{ secrets.KEY_PASSWORD }}' \
-            '${{ secrets.KEY_ALIAS }}' \
-            > android/key.properties
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Build Release APK
-        run: flutter build apk --release --android-skip-build-dependency-validation
-
-      - name: Sign APK
-        run: |
-          $ANDROID_SDK_ROOT/build-tools/34.0.0/apksigner sign \
-            --ks android/app/lifestones-release.jks \
-            --ks-key-alias ${{ secrets.KEY_ALIAS }} \
-            --ks-pass pass:${{ secrets.KEYSTORE_PASSWORD }} \
-            --key-pass pass:${{ secrets.KEY_PASSWORD }} \
-            --out build/app/outputs/flutter-apk/Lifestones-signed.apk \
-            build/app/outputs/flutter-apk/app-release.apk
-
-      - name: Upload Signed APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Lifestones-release-signed
-          path: build/app/outputs/flutter-apk/Lifestones-signed.apk                  'plugins {\n    id("com.google.gms.google-services") version "4.4.0" apply false',
-                  1
-              )
-
-          with open('android/settings.gradle.kts', 'w') as f:
-              f.write(content)
-
-          print("settings.gradle.kts fixed!")
-          PYEOF
+          cp /tmp/backup/build.gradle.kts android/app/build.gradle.kts
 
       - name: Fix gradle.properties
         run: |
@@ -185,6 +60,22 @@ jobs:
           echo "android.useAndroidX=true" >> android/gradle.properties
           echo "android.enableJetifier=true" >> android/gradle.properties
 
+      - name: Fix settings.gradle.kts
+        run: |
+          python3 << 'PYEOF'
+          with open('android/settings.gradle.kts', 'r') as f:
+              content = f.read()
+          if 'com.google.gms.google-services' not in content:
+              content = content.replace(
+                  'plugins {',
+                  'plugins {\n    id("com.google.gms.google-services") version "4.4.0" apply false',
+                  1
+              )
+          with open('android/settings.gradle.kts', 'w') as f:
+              f.write(content)
+          print("settings.gradle.kts done!")
+          PYEOF
+
       - name: Decode keystore
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/lifestones-release.jks
 
@@ -216,4 +107,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Lifestones-release-signed
-          path: build/app/outputs/flutter-apk/Lifestones-signed.apk 
+          path: build/app/outputs/flutter-apk/Lifestones-signed.apk
