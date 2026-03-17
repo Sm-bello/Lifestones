@@ -63,6 +63,10 @@ jobs:
             > android/key.properties
 
       - name: Install dependencies
+      - name: Refresh Android project
+        run: |
+          flutter create --project-name lifestones --platforms android --org com.example . 2>/dev/null || true
+          git checkout pubspec.yaml lib/
         run: flutter pub get
 
       - name: Build Release APK
