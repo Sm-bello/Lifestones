@@ -1,0 +1,281 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:jitsi_meet_flutter_sdk/jitsi_meet_flutter_sdk.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:record/record.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Color(0xFF080D16),
+      statusBarIconBrightness: Brightness.light,
+    ),
+  );
+  runApp(const LifestonesApp());
+}
+
+// ── THEME COLORS ──────────────────────────────
+const kDark     = Color(0xFF080D16);
+const kDarkMid  = Color(0xFF0D1525);
+const kGold     = Color(0xFFC9973A);
+const kGoldLight= Color(0xFFE2B96F);
+const kSlate    = Color(0xFF475569);
+const kRed      = Color(0xFFEF4444);
+
+class LifestonesApp extends StatelessWidget {
+  const LifestonesApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Lifestones',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        scaffoldBackgroundColor: kDark,
+        colorScheme: const ColorScheme.dark(primary: kGold),
+        fontFamily: 'sans-serif',
+      ),
+      home: const HomeScreen(),
+    );
+  }
+}
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final _nameCtrl = TextEditingController();
+  final _roomCtrl = TextEditingController(text: "FRIDAY");
+  bool _isHost = false;
+  String _error = '';
+  
+  // Recording Engine
+  final record = AudioRecorder();
+  bool isRecording = false;
+
+  Future<void> _joinMeeting() async {
+    final name = _nameCtrl.text.trim();
+    final room = _roomCtrl.text.trim().toUpperCase();
+
+    if (name.isEmpty || room.isEmpty) {
+      setState(() => _error = 'Please enter your name and a room code');
+      return;
+    }
+
+    final conn = await Connectivity().checkConnectivity();
+    if (conn == ConnectivityResult.none) {
+      setState(() => _error = 'No internet connection detected');
+      return;
+    }
+    setState(() => _error = '');
+
+    // Request permissions
+    await Permission.microphone.request();
+    await Permission.storage.request();
+
+    final jitsi = JitsiMeet();
+    var options = JitsiMeetConferenceOptions(
+      serverURL: "https://meet.jit.si",
+      room: "Lifestones-$room",
+      userInfo: JitsiMeetUserInfo(displayName: name),
+      configOverrides: {
+        "startWithAudioMuted": false,
+        "startWithVideoMuted": true, // Audio only for low data
+        "disableDeepLinking": true,
+        "prejoinPageEnabled": false,
+      },
+      featureFlags: {
+        "video-mute.enabled": false, 
+        "chat.enabled": true,
+        "pip.enabled": true,
+      },
+    );
+
+    await jitsi.join(options);
+
+    // If joining as Pastor, auto-record locally
+    if (_isHost) {
+      _startRecording();
+    }
+  }
+
+  Future<void> _startRecording() async {
+    final dir = await getApplicationDocumentsDirectory();
+    final filePath = '${dir.path}/Lifestones_${DateTime.now().millisecondsSinceEpoch}.m4a';
+
+    if (await record.hasPermission()) {
+      await record.start(const RecordConfig(), path: filePath);
+      setState(() => isRecording = true);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("🎙️ Auto-recording started for offline use"), backgroundColor: kGold),
+        );
+      }
+    }
+  }
+
+  Future<void> _stopRecording() async {
+    if (!isRecording) return;
+    await record.stop();
+    setState(() => isRecording = false);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("✅ Recording saved to device!"), backgroundColor: Colors.green),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [kDark, kDarkMid, Color(0xFF0A1830)],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              children: [
+                const SizedBox(height: 52),
+                _buildHero(),
+                const SizedBox(height: 40),
+                _buildCard(),
+                const SizedBox(height: 16),
+                if (isRecording)
+                  ElevatedButton.icon(
+                    onPressed: _stopRecording,
+                    icon: const Icon(Icons.stop_circle, color: Colors.white),
+                    label: const Text("END CLASS & SAVE AUDIO", style: TextStyle(color: Colors.white)),
+                    style: ElevatedButton.styleFrom(backgroundColor: kRed, padding: const EdgeInsets.all(16)),
+                  ),
+                const SizedBox(height: 40),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHero() {
+    return Column(
+      children: [
+        Container(
+          width: 72, height: 72,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: RadialGradient(colors: [kGoldLight.withOpacity(0.2), Colors.transparent]),
+          ),
+          child: const Center(child: Text('✝', style: TextStyle(fontSize: 44, color: kGoldLight))),
+        ),
+        const SizedBox(height: 12),
+        const Text('Lifestones', style: TextStyle(fontSize: 38, fontWeight: FontWeight.w800, color: kGoldLight, letterSpacing: -1)),
+        const SizedBox(height: 4),
+        Text('DISCIPLESHIP · COMMUNITY · FAITH', style: TextStyle(fontSize: 10, letterSpacing: 3.5, color: kSlate.withOpacity(0.5))),
+      ],
+    );
+  }
+
+  Widget _buildCard() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.07)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _label('YOUR NAME'),
+          _input(_nameCtrl, 'e.g. Bro Emmanuel', false),
+          const SizedBox(height: 16),
+          _label('I AM JOINING AS'),
+          Row(
+            children: [
+              _roleBtn('🎤', 'Pastor', true),
+              const SizedBox(width: 10),
+              _roleBtn('🙏', 'Member', false),
+            ],
+          ),
+          if (_error.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(_error, style: const TextStyle(color: kRed, fontSize: 13)),
+          ],
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _joinMeeting,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kGold,
+                padding: const EdgeInsets.symmetric(vertical: 17),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              child: const Text('Join Class →', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Colors.white)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _label(String text) => Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Text(text, style: TextStyle(color: kSlate.withOpacity(0.7), fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 2)),
+  );
+
+  Widget _input(TextEditingController ctrl, String hint, bool isCode) {
+    return TextField(
+      controller: ctrl,
+      style: const TextStyle(color: Colors.white, fontSize: 16),
+      textCapitalization: TextCapitalization.words,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(color: kSlate.withOpacity(0.4)),
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.06),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: kGold)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      ),
+    );
+  }
+
+  Widget _roleBtn(String icon, String name, bool isHostRole) {
+    final selected = _isHost == isHostRole;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _isHost = isHostRole),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+          decoration: BoxDecoration(
+            color: selected ? kGold.withOpacity(0.1) : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: selected ? kGold : Colors.white.withOpacity(0.08)),
+          ),
+          child: Column(
+            children: [
+              Text(icon, style: const TextStyle(fontSize: 24)),
+              const SizedBox(height: 4),
+              Text(name, style: TextStyle(color: selected ? kGoldLight : kSlate, fontWeight: FontWeight.w600, fontSize: 14)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
