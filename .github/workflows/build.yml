@@ -2,7 +2,7 @@ name: Build Lifestones APK
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
@@ -44,14 +44,9 @@ jobs:
           echo "android.useAndroidX=true" >> android/gradle.properties
           echo "android.enableJetifier=true" >> android/gradle.properties
 
-      - name: Create key.properties
+      - name: Generate Master Keystore
         run: |
-          cat > android/key.properties << 'KEYEOF'
-          storePassword=Lifestones2026!
-          keyPassword=Lifestones2026!
-          keyAlias=lifestones
-          storeFile=lifestones-release.jks
-          KEYEOF
+          keytool -genkey -v -keystore android/app/lifestones-release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias lifestones -storepass Lifestones2026! -keypass Lifestones2026! -dname "CN=Lifestones, OU=App, O=Lifestones Church, L=Kaduna, S=Kaduna, C=NG"
 
       - name: Install dependencies
         run: flutter pub get
@@ -74,3 +69,9 @@ jobs:
         with:
           name: Lifestones-release-signed
           path: build/app/outputs/flutter-apk/Lifestones-signed.apk
+
+      - name: Save Keystore for Future Updates
+        uses: actions/upload-artifact@v4
+        with:
+          name: Lifestones-Master-Key
+          path: android/app/lifestones-release.jks
