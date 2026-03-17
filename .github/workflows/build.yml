@@ -52,26 +52,73 @@ jobs:
           cp -r /tmp/backup/lib/. lib/
           cp /tmp/backup/google-services.json android/app/ 2>/dev/null || echo "no gservices"
 
-      - name: Fix project config
+      - name: Fix build.gradle.kts with Python
         run: |
-          sed -i 's/compileSdk = [0-9]*/compileSdk = 36/' android/app/build.gradle.kts
-          sed -i 's/minSdk = [0-9]*/minSdk = 26/' android/app/build.gradle.kts
-          sed -i 's/targetSdk = [0-9]*/targetSdk = 36/' android/app/build.gradle.kts
+          python3 << 'PYEOF'
+          import re
+
+          with open('android/app/build.gradle.kts', 'r') as f:
+              content = f.read()
+
+          # Fix compileSdk - handles both number and flutter.compileSdkVersion
+          content = re.sub(r'compileSdk\s*=\s*\S+', 'compileSdk = 36', content)
+          # Fix minSdk
+          content = re.sub(r'minSdk\s*=\s*\S+', 'minSdk = 26', content)
+          # Fix targetSdk
+          content = re.sub(r'targetSdk\s*=\s*\S+', 'targetSdk = 36', content)
+          # Disable minify
+          content = content.replace('isMinifyEnabled = true', 'isMinifyEnabled = false')
+          content = content.replace('isShrinkResources = true', 'isShrinkResources = false')
+          # Add desugaring to compileOptions
+          content = content.replace(
+              'compileOptions {',
+              'compileOptions {\n        isCoreLibraryDesugaringEnabled = true'
+          )
+          # Add desugar dependency
+          content = content.replace(
+              'dependencies {',
+              'dependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")',
+              1
+          )
+          # Add Firebase plugin
+          if 'com.google.gms.google-services' not in content:
+              content = content.replace(
+                  'plugins {',
+                  'plugins {\n    id("com.google.gms.google-services")',
+                  1
+              )
+
+          with open('android/app/build.gradle.kts', 'w') as f:
+              f.write(content)
+
+          print("build.gradle.kts fixed successfully!")
+          print(content[:500])
+          PYEOF
+
+      - name: Fix settings.gradle.kts with Python
+        run: |
+          python3 << 'PYEOF'
+          with open('android/settings.gradle.kts', 'r') as f:
+              content = f.read()
+
+          if 'com.google.gms.google-services' not in content:
+              content = content.replace(
+                  'plugins {',
+                  'plugins {\n    id("com.google.gms.google-services") version "4.4.0" apply false',
+                  1
+              )
+
+          with open('android/settings.gradle.kts', 'w') as f:
+              f.write(content)
+
+          print("settings.gradle.kts fixed!")
+          PYEOF
+
+      - name: Fix gradle.properties
+        run: |
           echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g" >> android/gradle.properties
           echo "android.useAndroidX=true" >> android/gradle.properties
           echo "android.enableJetifier=true" >> android/gradle.properties
-
-      - name: Disable R8 and enable desugaring
-        run: |
-          sed -i 's/isMinifyEnabled = true/isMinifyEnabled = false/' android/app/build.gradle.kts
-          sed -i 's/isShrinkResources = true/isShrinkResources = false/' android/app/build.gradle.kts
-          sed -i '/compileOptions {/a\        isCoreLibraryDesugaringEnabled = true' android/app/build.gradle.kts
-          sed -i '/^    dependencies {/a\        coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")' android/app/build.gradle.kts
-
-      - name: Add Firebase to build files
-        run: |
-          sed -i '/^plugins {/a\    id("com.google.gms.google-services")' android/app/build.gradle.kts
-          sed -i '/^plugins {/a\    id("com.google.gms.google-services") version "4.4.0" apply false' android/settings.gradle.kts
 
       - name: Decode keystore
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/lifestones-release.jks
@@ -104,6 +151,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Lifestones-release-signed
-          path: build/app/outputs/flutter-apk/Lifestones-signed.apk
-
-
+          path: build/app/outputs/flutter-apk/Lifestones-signed.apk 
