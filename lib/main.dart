@@ -3,8 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:jitsi_meet_flutter_sdk/jitsi_meet_flutter_sdk.dart';
 
-// The Friend's Premium Color Palette
 const kMilk      = Color(0xFFFDF6E3);
 const kMilkDark  = Color(0xFFF0E6CC);
 const kGold      = Color(0xFFC9973A);
@@ -19,7 +20,6 @@ const kSurface   = Color(0xFFF8F9FA);
 
 final _auth = FirebaseAuth.instance;
 
-// The 2026 Google Authentication Engine
 Future<User?> signInWithGoogle() async {
   try {
     final googleSignIn = GoogleSignIn.instance;
@@ -262,7 +262,7 @@ class _MainShellState extends State<MainShell> {
   
   final _screens = const [
     DiscoverScreen(),
-    Center(child: Text('Meetings Screen (Coming Soon)', style: TextStyle(color: kGold, fontWeight: FontWeight.bold))),
+    MeetingsScreen(), // The new Network-Resilient engine
     Center(child: Text('Ministers Screen (Coming Soon)', style: TextStyle(color: kGold, fontWeight: FontWeight.bold))),
     Center(child: Text('Messages Screen (Coming Soon)', style: TextStyle(color: kGold, fontWeight: FontWeight.bold))),
     ProfileScreen(), 
@@ -338,6 +338,118 @@ class _MainShellState extends State<MainShell> {
   }
 }
 
+class MeetingsScreen extends StatefulWidget {
+  const MeetingsScreen({super.key});
+  @override
+  State<MeetingsScreen> createState() => _MeetingsScreenState();
+}
+
+class _MeetingsScreenState extends State<MeetingsScreen> {
+  bool _isJoining = false;
+
+  Future<void> _joinService() async {
+    setState(() => _isJoining = true);
+    try {
+      final connectivityResult = await Connectivity().checkConnectivity();
+      bool isWeakNetwork = false;
+      
+      // Safety check for different package versions
+      if (connectivityResult is List) {
+        isWeakNetwork = connectivityResult.contains(ConnectivityResult.mobile);
+      } else {
+        isWeakNetwork = connectivityResult == ConnectivityResult.mobile;
+      }
+      
+      if (isWeakNetwork && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Weak network detected. Activating Audio-Only Data Saver Mode 📡'),
+            backgroundColor: kGoldDark,
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
+
+      var options = JitsiMeetConferenceOptions(
+        room: "LifestonesMainSanctuary",
+        userInfo: JitsiMeetUserInfo(
+            displayName: FirebaseAuth.instance.currentUser?.displayName ?? "Member",
+            email: FirebaseAuth.instance.currentUser?.email,
+        ),
+        configOverrides: {
+          "startWithAudioMuted": false,
+          "startWithVideoMuted": true, // Always start video muted to save bandwidth
+          if (isWeakNetwork) "startAudioOnly": true, // Jitsi flag for extreme data saving
+        },
+        featureFlags: {
+          "unwelcome.page.enabled": false,
+          "prejoinpage.enabled": false,
+        },
+      );
+      
+      var jitsiMeet = JitsiMeet();
+      await jitsiMeet.join(options);
+    } catch (e) {
+      debugPrint("Jitsi error: $e");
+    } finally {
+      if (mounted) setState(() => _isJoining = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: kWhite,
+      appBar: AppBar(
+        backgroundColor: kWhite,
+        elevation: 0,
+        title: const Text('Live Meetings', style: TextStyle(color: kText, fontWeight: FontWeight.bold, fontSize: 22)),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 120, height: 120,
+                decoration: BoxDecoration(
+                  color: kGold.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.cell_tower, size: 60, color: kGold),
+              ),
+              const SizedBox(height: 32),
+              const Text('The Sanctuary', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: kText)),
+              const SizedBox(height: 12),
+              const Text(
+                'Powered by the Lifestones Data Saver Engine.\nJoin securely and clearly, even on a 3G network.', 
+                textAlign: TextAlign.center, 
+                style: TextStyle(color: kTextLight, height: 1.5, fontSize: 14)
+              ),
+              const SizedBox(height: 48),
+              ElevatedButton(
+                onPressed: _isJoining ? null : _joinService,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kGold,
+                  foregroundColor: kWhite,
+                  minimumSize: const Size(double.infinity, 56),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  elevation: 6,
+                  shadowColor: kGold.withOpacity(0.5),
+                ),
+                child: _isJoining 
+                  ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: kWhite, strokeWidth: 2)) 
+                  : const Text('Join Live Service', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class DiscoverScreen extends StatelessWidget {
   const DiscoverScreen({super.key});
 
@@ -360,7 +472,7 @@ class DiscoverScreen extends StatelessWidget {
             child: CircleAvatar(
               radius: 16, 
               backgroundColor: kGold, 
-              child: Text((firstName[0]).toUpperCase(), style: const TextStyle(color: kWhite, fontWeight: FontWeight.bold, fontSize: 14)),
+              child: Text((firstName.isNotEmpty ? firstName[0] : 'M').toUpperCase(), style: const TextStyle(color: kWhite, fontWeight: FontWeight.bold, fontSize: 14)),
             ),
           ),
         ],
@@ -505,7 +617,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text(
-                    (user?.displayName ?? 'M')[0].toUpperCase(),
+                    (user?.displayName != null && user!.displayName!.isNotEmpty ? user.displayName![0] : 'M').toUpperCase(),
                     style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w800, color: kWhite),
                   ),
                 ),
