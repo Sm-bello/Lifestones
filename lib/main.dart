@@ -20,8 +20,6 @@ const kRed       = Color(0xFFD32F2F);
 const kCard      = Color(0xFFFFFFFF);
 const kSurface   = Color(0xFFF8F9FA);
 
-// EXACT ENGINE FROM YOUR FRIEND'S SCRIPT
-final _googleSignIn = GoogleSignIn(scopes: ['email']);
 final _auth = FirebaseAuth.instance;
 final AudioPlayer globalAudioPlayer = AudioPlayer(); 
 
@@ -30,18 +28,19 @@ Future<void> initAudioSession() async {
   await session.configure(const AudioSessionConfiguration.speech());
 }
 
-// EXACT LOGIC FROM YOUR FRIEND'S SCRIPT
+// THE FLAWLESS 2026 AUTH ENGINE
 Future<User?> signInWithGoogle() async {
   try {
-    final googleUser = await _googleSignIn.signIn();
+    final googleSignIn = GoogleSignIn.instance;
+    final googleUser = await googleSignIn.authenticate();
     if (googleUser == null) return null;
+    
     final googleAuth = await googleUser.authentication;
     final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
+      idToken: googleAuth.idToken, 
     );
-    final result = await _auth.signInWithCredential(credential);
-    return result.user;
+    
+    return (await _auth.signInWithCredential(credential)).user;
   } catch (e) {
     debugPrint('Sign-in error: $e');
     return null;
@@ -50,13 +49,14 @@ Future<User?> signInWithGoogle() async {
 
 Future<void> signOut() async {
   await globalAudioPlayer.stop(); 
-  await _googleSignIn.signOut();
+  await GoogleSignIn.instance.signOut();
   await _auth.signOut();
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  await GoogleSignIn.instance.initialize(); 
   await initAudioSession(); 
   
   SystemChrome.setSystemUIOverlayStyle(
