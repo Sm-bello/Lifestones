@@ -75,7 +75,6 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final jitsi = JitsiMeet();
       var options = JitsiMeetConferenceOptions(
-        serverUrl: "https://meet.jit.si",
         room: "Lifestones-$room",
         userInfo: JitsiMeetUserInfo(displayName: name),
         configOverrides: {
