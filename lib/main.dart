@@ -26,23 +26,24 @@ class HomeScreen extends StatelessWidget {
 
   Future<void> _login(BuildContext context) async {
     try {
-      // FIXED SYNTAX FOR v7.2.0
-      final GoogleSignIn googleSignIn = GoogleSignIn(
-        scopes: ['email'],
-      );
-      
+      // THE NEW 2026 SYNTAX
+      final GoogleSignIn googleSignIn = GoogleSignIn();
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      
       if (googleUser == null) return;
       
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      
+      // We use the tokens directly to create the Firebase credential
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
       
       await FirebaseAuth.instance.signInWithCredential(credential);
+      
     } catch (e) {
-      print("Login error: $e");
+      debugPrint("Login error: $e");
     }
   }
 
