@@ -43,6 +43,9 @@ jobs:
           storeFile=lifestones-release.jks
           KEYEOF
 
+      - name: Reveal SHA Fingerprints (The Magic Trick)
+        run: keytool -list -v -keystore android/app/lifestones-release.jks -storepass "${{ secrets.KEYSTORE_PASSWORD }}" -alias "${{ secrets.KEY_ALIAS }}"
+
       - name: Fix project config
         run: |
           sed -i 's/compileSdk = [0-9]*/compileSdk = 36/' android/app/build.gradle.kts
