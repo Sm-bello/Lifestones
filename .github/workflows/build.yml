@@ -1,4 +1,4 @@
-name: Build Lifestones APK
+name: Build Lifestones Production APK
 
 on:
   push:
@@ -21,12 +21,11 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android tools and fix aapt2
+      - name: Install Android tools
         run: |
           sdkmanager --install "build-tools;34.0.0" "platforms;android-36" 2>/dev/null
           AAPT2=$(find $ANDROID_SDK_ROOT -name "aapt2" -type f 2>/dev/null | head -1)
           sudo ln -sf "$AAPT2" /usr/bin/aapt2
-          aapt2 version
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -34,44 +33,33 @@ jobs:
           flutter-version: '3.41.4'
           channel: 'stable'
 
+      - name: Decode Keystore from Secrets
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/lifestones-release.jks
+          cat > android/key.properties << 'KEYEOF'
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          storeFile=lifestones-release.jks
+          KEYEOF
+
       - name: Fix project config
         run: |
           sed -i 's/compileSdk = [0-9]*/compileSdk = 36/' android/app/build.gradle.kts
           sed -i 's/minSdk = [0-9]*/minSdk = 26/' android/app/build.gradle.kts
           sed -i 's/gradle-[0-9.]*-bin.zip/gradle-8.13-bin.zip/' android/gradle/wrapper/gradle-wrapper.properties
-          sed -i 's/id("com.android.application") version "[0-9.]*"/id("com.android.application") version "8.11.1"/' android/settings.gradle.kts
           echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g" >> android/gradle.properties
           echo "android.useAndroidX=true" >> android/gradle.properties
           echo "android.enableJetifier=true" >> android/gradle.properties
 
-      - name: Generate Master Keystore
-        run: |
-          keytool -genkey -v -keystore android/app/lifestones-release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias lifestones -storepass Lifestones2026! -keypass Lifestones2026! -dname "CN=Lifestones, OU=App, O=Lifestones Church, L=Kaduna, S=Kaduna, C=NG"
-
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build Release APK
+      - name: Build and Sign Release APK
         run: flutter build apk --release --android-skip-build-dependency-validation
-
-      - name: Sign APK
-        run: |
-          $ANDROID_SDK_ROOT/build-tools/34.0.0/apksigner sign \
-            --ks android/app/lifestones-release.jks \
-            --ks-key-alias lifestones \
-            --ks-pass pass:Lifestones2026! \
-            --key-pass pass:Lifestones2026! \
-            --out build/app/outputs/flutter-apk/Lifestones-signed.apk \
-            build/app/outputs/flutter-apk/app-release.apk
 
       - name: Upload Signed APK
         uses: actions/upload-artifact@v4
         with:
-          name: Lifestones-release-signed
-          path: build/app/outputs/flutter-apk/Lifestones-signed.apk
-
-      - name: Save Keystore for Future Updates
-        uses: actions/upload-artifact@v4
-        with:
-          name: Lifestones-Master-Key
-          path: android/app/lifestones-release.jks
+          name: Lifestones-Production-APK
+          path: build/app/outputs/flutter-apk/app-release.apk

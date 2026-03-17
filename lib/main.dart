@@ -24,17 +24,18 @@ class LifestonesApp extends StatelessWidget {
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  // GOOGLE LOGIN LOGIC
   Future<void> _login(BuildContext context) async {
-    final googleUser = await GoogleSignIn().signIn();
+    // FIXED: Using the proper instance call for GoogleSignIn
+    final GoogleSignIn googleSignIn = GoogleSignIn();
+    final googleUser = await googleSignIn.signIn();
     if (googleUser == null) return;
+    
     final googleAuth = await googleUser.authentication;
     final cred = GoogleAuthProvider.credential(
       accessToken: googleAuth.accessToken, idToken: googleAuth.idToken);
     await FirebaseAuth.instance.signInWithCredential(cred);
   }
 
-  // INTERNAL JITSI LOGIC (Prevents Play Store redirection)
   void _joinMeeting() {
     var options = JitsiMeetConferenceOptions(
       room: "LifestonesMainSanctuary",
