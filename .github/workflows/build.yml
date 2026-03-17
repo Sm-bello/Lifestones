@@ -21,8 +21,13 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android build tools
-        run: sdkmanager "build-tools;36.0.0" "platforms;android-36"
+      - name: Install build tools and fix aapt2
+        run: |
+          sdkmanager "build-tools;34.0.0" "platforms;android-36"
+          AAPT2=$(find $ANDROID_SDK_ROOT -name "aapt2" -type f | head -1)
+          echo "Found aapt2 at: $AAPT2"
+          sudo ln -sf $AAPT2 /usr/bin/aapt2
+          aapt2 version
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -30,11 +35,10 @@ jobs:
           flutter-version: '3.41.4'
           channel: 'stable'
 
-      - name: Bump compileSdk to 36
-        run: sed -i 's/compileSdk = [0-9]*/compileSdk = 36/' android/app/build.gradle.kts
-
-      - name: Increase Gradle memory
-        run: echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g" >> android/gradle.properties
+      - name: Fix compileSdk and memory
+        run: |
+          sed -i 's/compileSdk = [0-9]*/compileSdk = 36/' android/app/build.gradle.kts
+          echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g" >> android/gradle.properties
 
       - name: Install dependencies
         run: flutter pub get
