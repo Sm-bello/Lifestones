@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "125428172963",
+    "project_id": "lifestones-9119b",
+    "storage_bucket": "lifestones-9119b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:125428172963:android:3e244ed67c2c6524989716",
+        "android_client_info": {
+          "package_name": "com.example.lifestones"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "125428172963-qrf1fao5bcr7gha01bo8ic6v6bjsrril.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.lifestones",
+            "certificate_hash": "af4dc4cf365963029f9b33811ea09bfae6a46f6a"
+          }
+        },
+        {
+          "client_id": "125428172963-dd65dj5s15p6hkbpong3r6mtia6kvcs0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCOr0PGvWhb869qfKL-1PgbnE4iWpV4ivQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "125428172963-dd65dj5s15p6hkbpong3r6mtia6kvcs0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
