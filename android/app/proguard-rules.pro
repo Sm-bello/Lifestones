@@ -1,0 +1,9 @@
+-keep class kotlinx.parcelize.** { *; }
+-keep class com.giphy.** { *; }
+-keep class com.facebook.** { *; }
+-keep class com.facebook.react.** { *; }
+-keep class org.jitsi.** { *; }
+-keep class org.webrtc.** { *; }
+-dontwarn kotlinx.parcelize.**
+-dontwarn com.facebook.**
+-dontwarn org.jitsi.**
