@@ -7,6 +7,10 @@ import 'package:jitsi_meet_flutter_sdk/jitsi_meet_flutter_sdk.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(); 
+  
+  // REQUIRED IN v7.0.0+: You must initialize the singleton instance
+  await GoogleSignIn.instance.initialize();
+  
   runApp(const LifestonesApp());
 }
 
@@ -26,17 +30,19 @@ class HomeScreen extends StatelessWidget {
 
   Future<void> _login(BuildContext context) async {
     try {
-      // THE NEW 2026 SYNTAX
-      final GoogleSignIn googleSignIn = GoogleSignIn();
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      // 1. The Singleton update
+      final GoogleSignIn googleSignIn = GoogleSignIn.instance;
+      
+      // 2. signIn() is gone. We must use authenticate()
+      final GoogleSignInAccount? googleUser = await googleSignIn.authenticate();
       
       if (googleUser == null) return;
       
+      // 3. Get the authentication object
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       
-      // We use the tokens directly to create the Firebase credential
+      // 4. Firebase only needs the idToken now (accessToken was removed)
       final AuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
       
