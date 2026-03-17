@@ -44,37 +44,33 @@ jobs:
           echo "android.useAndroidX=true" >> android/gradle.properties
           echo "android.enableJetifier=true" >> android/gradle.properties
 
-      - name: Decode keystore
+      - name: Create key.properties
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/lifestones-release.jks
+          cat > android/key.properties << 'KEYEOF'
+          storePassword=Lifestones2026!
+          keyPassword=Lifestones2026!
+          keyAlias=lifestones
+          storeFile=lifestones-release.jks
+          KEYEOF
 
       - name: Install dependencies
         run: flutter pub get
 
       - name: Build Release APK
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: |
-          flutter build apk --release \
-            --android-skip-build-dependency-validation \
-            --dart-define=KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD \
-            --dart-define=KEY_ALIAS=$KEY_ALIAS \
-            --dart-define=KEY_PASSWORD=$KEY_PASSWORD
+        run: flutter build apk --release --android-skip-build-dependency-validation
 
       - name: Sign APK
         run: |
           $ANDROID_SDK_ROOT/build-tools/34.0.0/apksigner sign \
             --ks android/app/lifestones-release.jks \
-            --ks-key-alias ${{ secrets.KEY_ALIAS }} \
-            --ks-pass pass:${{ secrets.KEYSTORE_PASSWORD }} \
-            --key-pass pass:${{ secrets.KEY_PASSWORD }} \
-            --out build/app/outputs/flutter-apk/Lifestones-release-signed.apk \
+            --ks-key-alias lifestones \
+            --ks-pass pass:Lifestones2026! \
+            --key-pass pass:Lifestones2026! \
+            --out build/app/outputs/flutter-apk/Lifestones-signed.apk \
             build/app/outputs/flutter-apk/app-release.apk
 
       - name: Upload Signed APK
         uses: actions/upload-artifact@v4
         with:
           name: Lifestones-release-signed
-          path: build/app/outputs/flutter-apk/Lifestones-release-signed.apk
+          path: build/app/outputs/flutter-apk/Lifestones-signed.apk
