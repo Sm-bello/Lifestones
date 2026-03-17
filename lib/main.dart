@@ -4,14 +4,22 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-const kBackground = Color(0xFFFFFFFF);
-const kSurface    = Color(0xFFF8F9FA);
-const kGold       = Color(0xFFC9973A);
-const kTextDark   = Color(0xFF1A1A1A);
-const kTextLight  = Color(0xFF757575);
+// The Friend's Premium Color Palette
+const kMilk      = Color(0xFFFDF6E3);
+const kMilkDark  = Color(0xFFF0E6CC);
+const kGold      = Color(0xFFC9973A);
+const kGoldLight = Color(0xFFE2B96F);
+const kGoldDark  = Color(0xFFA07828);
+const kText      = Color(0xFF2C1A00);
+const kTextLight = Color(0xFF8B6914);
+const kWhite     = Color(0xFFFFFFFF);
+const kRed       = Color(0xFFD32F2F);
+const kCard      = Color(0xFFFFFFFF);
+const kSurface   = Color(0xFFF8F9FA);
 
 final _auth = FirebaseAuth.instance;
 
+// The 2026 Google Authentication Engine
 Future<User?> signInWithGoogle() async {
   try {
     final googleSignIn = GoogleSignIn.instance;
@@ -43,7 +51,7 @@ void main() async {
   
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
-      statusBarColor: kBackground,
+      statusBarColor: kMilk,
       statusBarIconBrightness: Brightness.dark,
     ),
   );
@@ -58,15 +66,17 @@ class LifestonesApp extends StatelessWidget {
       title: 'Lifestones',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        scaffoldBackgroundColor: kBackground,
+        scaffoldBackgroundColor: kMilk,
         colorScheme: const ColorScheme.light(primary: kGold),
-        fontFamily: 'Roboto', // Fallback, we can add a custom font later
       ),
       home: StreamBuilder<User?>(
         stream: _auth.authStateChanges(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(body: Center(child: CircularProgressIndicator(color: kGold)));
+            return const Scaffold(
+              backgroundColor: kMilk, 
+              body: Center(child: CircularProgressIndicator(color: kGold))
+            );
           }
           if (snapshot.hasData) return const MainShell();
           return const LoginScreen();
@@ -82,51 +92,157 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
   bool _loading = false;
+  String _error = '';
+  late AnimationController _ctrl;
+  late Animation<double> _fadeAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
+    _fadeAnim = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+    _ctrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   Future<void> _handleSignIn() async {
-    setState(() => _loading = true);
-    await signInWithGoogle();
-    if (mounted) setState(() => _loading = false);
+    setState(() { _loading = true; _error = ''; });
+    final user = await signInWithGoogle();
+    if (!mounted) return;
+    if (user == null) {
+      setState(() {
+        _error = 'Sign-in cancelled. Please try again.';
+        _loading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 100, height: 100,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(colors: [kGold.withOpacity(0.7), kGold]),
+      backgroundColor: kMilk,
+      body: FadeTransition(
+        opacity: _fadeAnim,
+        child: Container(
+          width: double.infinity,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [kMilk, kMilkDark],
+            ),
+          ),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 28),
+              child: Column(
+                children: [
+                  const SizedBox(height: 60),
+                  Container(
+                    width: 96, height: 96,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        colors: [kGoldLight, kGold],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(color: kGold.withOpacity(0.5), blurRadius: 32, spreadRadius: 4),
+                      ],
+                    ),
+                    child: const Center(child: Text('✝', style: TextStyle(fontSize: 48, color: kWhite))),
                   ),
-                  child: const Center(child: Text('✝', style: TextStyle(fontSize: 50, color: Colors.white))),
-                ),
-                const SizedBox(height: 32),
-                const Text('Lifestones', style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: kTextDark)),
-                const SizedBox(height: 8),
-                const Text('DISCIPLESHIP · COMMUNITY · FAITH', style: TextStyle(fontSize: 12, letterSpacing: 2, color: kTextLight)),
-                const SizedBox(height: 64),
-                ElevatedButton(
-                  onPressed: _loading ? null : _handleSignIn,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kGold,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 56),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  const SizedBox(height: 20),
+                  const Text('Lifestones', style: TextStyle(fontSize: 44, fontWeight: FontWeight.w800, color: kGold, letterSpacing: -1)),
+                  const SizedBox(height: 6),
+                  Text('DISCIPLESHIP · COMMUNITY · FAITH', style: TextStyle(fontSize: 10, letterSpacing: 3.5, color: kTextLight.withOpacity(0.6))),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: kGold.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: kGold.withOpacity(0.2)),
+                    ),
+                    child: Text(
+                      '"Where iron sharpens iron" — Prov 27:17',
+                      style: TextStyle(fontSize: 12, color: kGoldDark.withOpacity(0.8), fontStyle: FontStyle.italic),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
-                  child: _loading 
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Continue with Google', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                ),
-              ],
+                  const SizedBox(height: 48),
+                  Container(
+                    padding: const EdgeInsets.all(28),
+                    decoration: BoxDecoration(
+                      color: kCard,
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(color: kGold.withOpacity(0.15)),
+                      boxShadow: [
+                        BoxShadow(color: kGold.withOpacity(0.12), blurRadius: 32, spreadRadius: 2, offset: const Offset(0, 6)),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        const Text('Welcome to the Family', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: kText)),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Join thousands growing in faith together.\nSign in to access your discipleship classes.',
+                          style: TextStyle(fontSize: 14, height: 1.5, color: kTextLight.withOpacity(0.7)),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 28),
+                        if (_error.isNotEmpty) ...[
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(color: kRed.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
+                            child: Text(_error, style: const TextStyle(color: kRed, fontSize: 13), textAlign: TextAlign.center),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _loading ? null : _handleSignIn,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: kGold,
+                              foregroundColor: kWhite,
+                              padding: const EdgeInsets.symmetric(vertical: 18),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              elevation: 6,
+                              shadowColor: kGold.withOpacity(0.5),
+                            ),
+                            child: _loading
+                                ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(color: kWhite, strokeWidth: 2.5))
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Container(
+                                        width: 24, height: 24,
+                                        decoration: BoxDecoration(color: kWhite, borderRadius: BorderRadius.circular(4)),
+                                        child: const Center(child: Text('G', style: TextStyle(color: kGold, fontWeight: FontWeight.w900, fontSize: 14))),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      const Text('Continue with Google', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                                    ],
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text('By signing in, you join the Lifestones family ✝', style: TextStyle(fontSize: 11, color: kTextLight.withOpacity(0.5)), textAlign: TextAlign.center),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                ],
+              ),
             ),
           ),
         ),
@@ -144,26 +260,22 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _tab = 0;
   
-  // MLP: Setting up the 5 screens to match the design
   final _screens = const [
     DiscoverScreen(),
-    Center(child: Text('Meetings Screen (Coming Soon)')),
-    Center(child: Text('Ministers Screen (Coming Soon)')),
-    Center(child: Text('Messages Screen (Coming Soon)')),
-    Center(child: Text('Library Screen (Coming Soon)')),
+    Center(child: Text('Meetings Screen (Coming Soon)', style: TextStyle(color: kGold, fontWeight: FontWeight.bold))),
+    Center(child: Text('Ministers Screen (Coming Soon)', style: TextStyle(color: kGold, fontWeight: FontWeight.bold))),
+    Center(child: Text('Messages Screen (Coming Soon)', style: TextStyle(color: kGold, fontWeight: FontWeight.bold))),
+    ProfileScreen(), 
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: kWhite,
       body: Stack(
         children: [
           _screens[_tab],
-          // The Persistent Mini-Player matching the screenshot
-          Positioned(
-            left: 0, right: 0, bottom: 0,
-            child: _buildMiniPlayer(),
-          ),
+          Positioned(left: 0, right: 0, bottom: 0, child: _buildMiniPlayer()),
         ],
       ),
       bottomNavigationBar: Container(
@@ -173,7 +285,7 @@ class _MainShellState extends State<MainShell> {
         child: BottomNavigationBar(
           currentIndex: _tab,
           onTap: (i) => setState(() => _tab = i),
-          backgroundColor: Colors.white,
+          backgroundColor: kWhite,
           selectedItemColor: kGold,
           unselectedItemColor: kTextLight.withOpacity(0.5),
           selectedFontSize: 11,
@@ -185,7 +297,7 @@ class _MainShellState extends State<MainShell> {
             BottomNavigationBarItem(icon: Icon(Icons.calendar_month_outlined), activeIcon: Icon(Icons.calendar_month), label: 'Meetings'),
             BottomNavigationBarItem(icon: Icon(Icons.people_outline), activeIcon: Icon(Icons.people), label: 'Ministers'),
             BottomNavigationBarItem(icon: Icon(Icons.grid_view_outlined), activeIcon: Icon(Icons.grid_view), label: 'Messages'),
-            BottomNavigationBarItem(icon: Icon(Icons.library_books_outlined), activeIcon: Icon(Icons.library_books), label: 'Library'),
+            BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Profile'),
           ],
         ),
       ),
@@ -203,7 +315,7 @@ class _MainShellState extends State<MainShell> {
         children: [
           Container(
             width: 64, height: 64,
-            color: kGold.withOpacity(0.3),
+            color: kGold.withOpacity(0.15),
             child: const Icon(Icons.music_note, color: kGold),
           ),
           const SizedBox(width: 12),
@@ -212,12 +324,12 @@ class _MainShellState extends State<MainShell> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Works of The Devil By Attaining...', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: kTextDark), maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text('Works of The Devil By Attaining...', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: kText), maxLines: 1, overflow: TextOverflow.ellipsis),
                 Text('Rev. Kayode Oyegoke', style: TextStyle(fontSize: 11, color: kGold)),
               ],
             ),
           ),
-          IconButton(icon: const Icon(Icons.play_circle_fill, size: 32, color: kTextDark), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.play_circle_fill, size: 32, color: kText), onPressed: () {}),
           IconButton(icon: const Icon(Icons.close, color: kTextLight), onPressed: () {}),
           const SizedBox(width: 8),
         ],
@@ -231,24 +343,28 @@ class DiscoverScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    final firstName = user?.displayName?.split(' ').first ?? 'Friend';
+    
     return Scaffold(
+      backgroundColor: kWhite,
       appBar: AppBar(
-        backgroundColor: kBackground,
+        backgroundColor: kWhite,
         elevation: 0,
-        title: const Text('Dashboard', style: TextStyle(color: kTextDark, fontWeight: FontWeight.bold, fontSize: 22)),
+        title: Text('Hello, $firstName', style: const TextStyle(color: kText, fontWeight: FontWeight.bold, fontSize: 22)),
         actions: [
-          IconButton(icon: const Icon(Icons.search, color: kTextDark), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.notifications_none, color: kTextDark), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.search, color: kText), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.notifications_none, color: kText), onPressed: () {}),
           Padding(
             padding: const EdgeInsets.only(right: 16, left: 8),
-            child: GestureDetector(
-              onTap: signOut,
-              child: const CircleAvatar(radius: 16, backgroundColor: kGold, child: Icon(Icons.person, size: 18, color: Colors.white)),
+            child: CircleAvatar(
+              radius: 16, 
+              backgroundColor: kGold, 
+              child: Text((firstName[0]).toUpperCase(), style: const TextStyle(color: kWhite, fontWeight: FontWeight.bold, fontSize: 14)),
             ),
           ),
         ],
       ),
-      // Add bottom padding so the scroll view doesn't hide behind the mini player (64px)
       body: SingleChildScrollView(
         padding: const EdgeInsets.only(bottom: 80),
         child: Column(
@@ -266,7 +382,7 @@ class DiscoverScreen extends StatelessWidget {
             const SizedBox(height: 32),
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text('Curated for you', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: kTextDark)),
+              child: Text('Curated for you', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: kText)),
             ),
             const SizedBox(height: 16),
             _buildHorizontalList(
@@ -280,7 +396,7 @@ class DiscoverScreen extends StatelessWidget {
             const SizedBox(height: 32),
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text('Popular in your circle', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: kTextDark)),
+              child: Text('Popular in your circle', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: kText)),
             ),
             const SizedBox(height: 16),
             _buildHorizontalList(
@@ -323,10 +439,10 @@ class DiscoverScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.grey.withOpacity(0.1)),
             ),
-            child: const Center(child: Icon(Icons.image_outlined, size: 40, color: kGold)), // Placeholder for real image
+            child: const Center(child: Icon(Icons.image_outlined, size: 40, color: kGold)), 
           ),
           const SizedBox(height: 8),
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: kTextDark), maxLines: 1, overflow: TextOverflow.ellipsis),
+          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: kText), maxLines: 1, overflow: TextOverflow.ellipsis),
           Text(subtitle, style: const TextStyle(fontSize: 12, color: kGold), maxLines: 1, overflow: TextOverflow.ellipsis),
         ],
       ),
@@ -346,7 +462,7 @@ class DiscoverScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.grey.withOpacity(0.1)),
             ),
-            child: const Center(child: Icon(Icons.book, size: 40, color: kGold)), // Placeholder for real image
+            child: const Center(child: Icon(Icons.book, size: 40, color: kGold)), 
           ),
           const SizedBox(height: 8),
           Text(subtitle, style: const TextStyle(fontSize: 12, color: kGold), maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -363,6 +479,60 @@ class DiscoverScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Center(child: Text(title, style: TextStyle(color: color, fontWeight: FontWeight.bold), textAlign: TextAlign.center)),
+    );
+  }
+}
+
+class ProfileScreen extends StatelessWidget {
+  const ProfileScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    return Scaffold(
+      backgroundColor: kWhite,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              const SizedBox(height: 40),
+              Container(
+                width: 90, height: 90,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(colors: [kGoldLight, kGold]),
+                ),
+                child: Center(
+                  child: Text(
+                    (user?.displayName ?? 'M')[0].toUpperCase(),
+                    style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w800, color: kWhite),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(user?.displayName ?? 'Member', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: kText)),
+              const SizedBox(height: 4),
+              Text(user?.email ?? '', style: TextStyle(fontSize: 14, color: kTextLight.withOpacity(0.6))),
+              const Spacer(),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () async => await signOut(),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: kRed,
+                    side: const BorderSide(color: kRed),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  child: const Text('Sign Out', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                ),
+              ),
+              const SizedBox(height: 80), 
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
