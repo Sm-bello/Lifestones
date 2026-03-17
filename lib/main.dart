@@ -25,15 +25,25 @@ class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   Future<void> _login(BuildContext context) async {
-    // FIXED: Using the proper instance call for GoogleSignIn
-    final GoogleSignIn googleSignIn = GoogleSignIn();
-    final googleUser = await googleSignIn.signIn();
-    if (googleUser == null) return;
-    
-    final googleAuth = await googleUser.authentication;
-    final cred = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken, idToken: googleAuth.idToken);
-    await FirebaseAuth.instance.signInWithCredential(cred);
+    try {
+      // FIXED SYNTAX FOR v7.2.0
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        scopes: ['email'],
+      );
+      
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      if (googleUser == null) return;
+      
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      
+      await FirebaseAuth.instance.signInWithCredential(credential);
+    } catch (e) {
+      print("Login error: $e");
+    }
   }
 
   void _joinMeeting() {
