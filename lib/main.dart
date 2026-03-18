@@ -789,6 +789,140 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     );
   }
 
+  void _showRecordingDetail(Map<String, dynamic> data, BuildContext ctx) {
+    final summary = data['summary'] ?? '';
+    final title = data['title'] ?? 'Class Recording';
+    final url = data['downloadUrl'] ?? '';
+    final uploadedBy = data['uploadedBy'] ?? 'Pastor';
+    final ts = data['endedAt'] as Timestamp?;
+    final date = ts != null
+      ? DateFormat('EEE, MMM d, yyyy · h:mm a').format(ts.toDate()) : '';
+
+    showModalBottomSheet(
+      context: ctx,
+      backgroundColor: kWhite,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      builder: (ctx) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.7,
+        maxChildSize: 0.95,
+        builder: (_, controller) => SingleChildScrollView(
+          controller: controller,
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(child: Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(
+                  color: kGold.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(2)))),
+              const SizedBox(height: 20),
+              Row(children: [
+                Container(
+                  width: 52, height: 52,
+                  decoration: BoxDecoration(
+                    color: kGold.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(26)),
+                  child: const Icon(Icons.mic, color: kGold, size: 28)),
+                const SizedBox(width: 12),
+                Expanded(child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.w800, color: kText)),
+                    Text('By \$uploadedBy · \$date',
+                      style: TextStyle(fontSize: 11,
+                        color: kTextLight.withOpacity(0.6))),
+                  ],
+                )),
+              ]),
+              const SizedBox(height: 20),
+              Row(children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => _playRecording(url, ctx),
+                    icon: Icon(_isPlaying && _currentUrl == url
+                      ? Icons.pause : Icons.play_arrow),
+                    label: Text(_isPlaying && _currentUrl == url
+                      ? 'Pause' : 'Play'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kGold,
+                      foregroundColor: kWhite,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 14)),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _downloadRecording(url, title, ctx),
+                    icon: const Icon(Icons.download_outlined),
+                    label: const Text('Download'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: kGold,
+                      side: const BorderSide(color: kGold),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 14)),
+                  ),
+                ),
+              ]),
+              const SizedBox(height: 24),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: kMilk,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: kGold.withOpacity(0.2))),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      const Text('🤖 AI Class Summary',
+                        style: TextStyle(fontSize: 14,
+                          fontWeight: FontWeight.w800, color: kText)),
+                      const Spacer(),
+                      if (summary.isEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: kGold.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10)),
+                          child: Text('Coming soon',
+                            style: TextStyle(fontSize: 10,
+                              color: kGoldDark))),
+                    ]),
+                    const SizedBox(height: 10),
+                    Text(
+                      summary.isEmpty
+                        ? 'AI summary will appear here after the class recording is processed. '
+                          'This gives members who missed the class a quick overview of what was taught.'
+                        : summary,
+                      style: TextStyle(
+                        fontSize: 13, height: 1.6,
+                        color: summary.isEmpty
+                          ? kTextLight.withOpacity(0.5)
+                          : kText.withOpacity(0.85),
+                        fontStyle: summary.isEmpty
+                          ? FontStyle.italic : FontStyle.normal),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   final AudioPlayer _audioPlayer = AudioPlayer();
   bool _isPlaying = false;
   String _currentUrl = '';
@@ -1008,14 +1142,23 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
       final downloadUrl = await uploadTask.ref.getDownloadURL();
 
       // Save to Firestore
+      // Get topic from live meeting
+      String meetingTopic = 'Lifestones Class';
+      try {
+        final doc = await FirebaseFirestore.instance
+          .collection('meetings').doc('current_live').get();
+        meetingTopic = doc.data()?['topic'] ?? 'Lifestones Class';
+      } catch (e) { debugPrint('Topic fetch error: \$e'); }
+
       await FirebaseFirestore.instance.collection('recordings').add({
         'roomCode': roomCode,
         'downloadUrl': downloadUrl,
-        'title': 'Lifestones Class - \${DateTime.now().toString().substring(0, 10)}',
+        'title': meetingTopic,
         'duration': '',
         'uploadedBy': _user?.displayName ?? 'Pastor',
         'uploadedAt': FieldValue.serverTimestamp(),
         'endedAt': FieldValue.serverTimestamp(),
+        'summary': '',
       });
 
       if (mounted) {
@@ -1032,6 +1175,7 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
 
   void _showRoleDialog({required bool isStarting, String? roomCode}) {
     String selectedRole = 'member';
+    final topicCtrl = TextEditingController();
     showModalBottomSheet(
       context: context,
       backgroundColor: kWhite,
@@ -1057,7 +1201,26 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
               Text('How are you joining today?',
                 style: TextStyle(fontSize: 14,
                   color: kTextLight.withOpacity(0.7))),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
+              if (isStarting) ...[
+                TextField(
+                  controller: topicCtrl,
+                  decoration: InputDecoration(
+                    hintText: 'Class topic or theme (e.g. Faith, Prayer)...',
+                    filled: true, fillColor: kMilk,
+                    prefixIcon: const Icon(Icons.book_outlined, color: kGold),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: kGold.withOpacity(0.3))),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: kGold.withOpacity(0.3))),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: kGold, width: 2))),
+                ),
+                const SizedBox(height: 16),
+              ],
               Row(children: [
                 _roleOption(setModal, '🎤', 'Pastor',
                   'Lead the session', selectedRole == 'pastor',
@@ -1159,7 +1322,10 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
                   onPressed: () async {
                     Navigator.pop(ctx);
                     if (isStarting) {
-                      await _startMeeting(selectedRole);
+                      final topic = topicCtrl.text.trim().isEmpty
+                        ? 'Lifestones Class'
+                        : topicCtrl.text.trim();
+                      await _startMeeting(selectedRole, topic: topic);
                     } else {
                       await _joinMeeting(roomCode!, selectedRole);
                     }
@@ -1212,9 +1378,9 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
     );
   }
 
-  Future<void> _startMeeting(String role) async {
+  Future<void> _startMeeting(String role, {String topic = 'Lifestones Class'}) async {
     final roomCode = await FirebaseService.createMeeting(
-      topic: 'Lifestones Class',
+      topic: topic,
       starterName: _user?.displayName ?? 'Member',
       starterUid: _user?.uid ?? '',
       role: role,
