@@ -56,6 +56,14 @@ jobs:
           cp ci/AndroidManifest.xml android/app/src/main/AndroidManifest.xml
           mkdir -p android/app/src/main/res/values
           cp ci/strings.xml android/app/src/main/res/values/strings.xml
+          if [ -f ci/MainActivity.kt ]; then
+            mkdir -p android/app/src/main/kotlin/com/example/lifestones
+            cp ci/MainActivity.kt android/app/src/main/kotlin/com/example/lifestones/MainActivity.kt
+          fi
+          if [ -f ci/MainActivity.java ]; then
+            mkdir -p android/app/src/main/java/com/example/lifestones
+            cp ci/MainActivity.java android/app/src/main/java/com/example/lifestones/MainActivity.java
+          fi
 
       - name: Fix gradle.properties
         run: |
