@@ -894,6 +894,7 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
     try {
       final jitsi = JitsiMeet();
       await jitsi.join(JitsiMeetConferenceOptions(
+        serverURL: "https://meet.ffmuc.net",
         room: 'Lifestones-$roomCode',
         userInfo: JitsiMeetUserInfo(
           displayName: _user?.displayName ?? 'Member',
