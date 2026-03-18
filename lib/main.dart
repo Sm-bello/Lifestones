@@ -106,7 +106,23 @@ class LifestonesApp extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const SplashScreen();
           }
-          if (snapshot.hasData) return const MainShell();
+          if (snapshot.hasData) {
+            return StreamBuilder<DocumentSnapshot>(
+              stream: FirebaseFirestore.instance
+                .collection('users')
+                .doc(snapshot.data!.uid)
+                .snapshots(),
+              builder: (ctx, userSnap) {
+                if (userSnap.connectionState == ConnectionState.waiting) {
+                  return const SplashScreen();
+                }
+                final data = userSnap.data?.data() as Map<String, dynamic>?;
+                final roleSet = data?['role'] != null;
+                if (!roleSet) return const RoleSelectionScreen();
+                return const MainShell();
+              },
+            );
+          }
           return const LoginScreen();
         },
       ),
@@ -345,25 +361,31 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   Future<void> _selectRole(String role) async {
     if (role == 'pastor') {
       final pin = await _showPinDialog();
-      if (pin != '7749') {
+      if (pin == null || pin != '7749') {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Wrong PIN'),
+            const SnackBar(content: Text('❌ Wrong PIN. Try again.'),
               backgroundColor: kRed));
         }
         return;
       }
     }
     setState(() => _loading = true);
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid != null) {
-      await FirebaseFirestore.instance.collection('users').doc(uid).update({
-        'role': role,
-        'chatApproved': role == 'pastor',
-        'roleSetAt': FieldValue.serverTimestamp(),
-      });
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        await FirebaseFirestore.instance
+          .collection('users').doc(uid).set({
+            'role': role,
+            'chatApproved': role == 'pastor',
+            'roleSetAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+      }
+    } catch (e) {
+      debugPrint('Role set error: \$e');
     }
     if (mounted) {
+      setState(() => _loading = false);
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const MainShell()));
     }
@@ -1688,9 +1710,11 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
   }
 
   Widget _buildLiveCard(Map<String, dynamic> data) {
+    final isLive = data['isLive'] == true;
+    if (!isLive) return const SizedBox();
     return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.95, end: 1.05),
-      duration: const Duration(milliseconds: 1000),
+      tween: Tween(begin: 0.98, end: 1.02),
+      duration: const Duration(milliseconds: 1500),
       curve: Curves.easeInOut,
       onEnd: () => setState(() {}),
       builder: (ctx, scale, child) => Transform.scale(
