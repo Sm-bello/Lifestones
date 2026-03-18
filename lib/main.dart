@@ -550,28 +550,38 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           ],
         ),
         const Spacer(),
-        Container(
-          width: 38, height: 38,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle, color: kWhite,
-            border: Border.all(color: kGold.withOpacity(0.2)),
-            boxShadow: [BoxShadow(
-              color: kGoldNeon.withOpacity(0.15),
-              blurRadius: 8, spreadRadius: 1)]),
-          child: const Icon(Icons.notifications_outlined,
-            color: kGold, size: 20)),
+        GestureDetector(
+          onTap: () {
+            final shell = context.findAncestorStateOfType<_MainShellState>();
+            shell?.setState(() => shell._tab = 3);
+          },
+          child: Container(
+            width: 38, height: 38,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle, color: kWhite,
+              border: Border.all(color: kGold.withOpacity(0.2)),
+              boxShadow: [BoxShadow(
+                color: kGoldNeon.withOpacity(0.15),
+                blurRadius: 8, spreadRadius: 1)]),
+            child: const Icon(Icons.notifications_outlined,
+              color: kGold, size: 20))),
         const SizedBox(width: 8),
-        Container(
-          width: 38, height: 38,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle, color: kGold,
-            boxShadow: [BoxShadow(
-              color: kGoldNeon.withOpacity(0.3),
-              blurRadius: 8, spreadRadius: 1)]),
-          child: Center(child: Text(
-            (_user?.displayName ?? 'M')[0].toUpperCase(),
-            style: const TextStyle(color: kWhite,
-              fontWeight: FontWeight.w800, fontSize: 16)))),
+        GestureDetector(
+          onTap: () {
+            final shell = context.findAncestorStateOfType<_MainShellState>();
+            shell?.setState(() => shell._tab = 4);
+          },
+          child: Container(
+            width: 38, height: 38,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle, color: kGold,
+              boxShadow: [BoxShadow(
+                color: kGoldNeon.withOpacity(0.3),
+                blurRadius: 8, spreadRadius: 1)]),
+            child: Center(child: Text(
+              (_user?.displayName ?? 'M')[0].toUpperCase(),
+              style: const TextStyle(color: kWhite,
+                fontWeight: FontWeight.w800, fontSize: 16))))),
       ],
     );
   }
@@ -750,32 +760,82 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
             style: TextStyle(fontSize: 16,
               fontWeight: FontWeight.w800, color: kText)),
           const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: kMilk,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: kGold.withOpacity(0.1))),
-            child: Row(children: [
-              Container(
-                width: 44, height: 44,
-                decoration: BoxDecoration(
-                  color: kGold,
-                  borderRadius: BorderRadius.circular(22)),
-                child: const Icon(Icons.mic, color: kWhite, size: 22)),
-              const SizedBox(width: 12),
-              Expanded(child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Recordings saved on your device',
-                    style: TextStyle(fontSize: 13,
-                      fontWeight: FontWeight.w700, color: kText)),
-                  Text('Visit Sanctuary to start recording',
-                    style: TextStyle(fontSize: 11,
-                      color: kTextLight.withOpacity(0.6))),
-                ],
-              )),
-            ]),
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+              .collection('recordings')
+              .orderBy('endedAt', descending: true)
+              .limit(10)
+              .snapshots(),
+            builder: (ctx, snap) {
+              if (!snap.hasData || snap.data!.docs.isEmpty) {
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: kMilk,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: kGold.withOpacity(0.1))),
+                  child: Row(children: [
+                    Container(
+                      width: 44, height: 44,
+                      decoration: BoxDecoration(
+                        color: kGold,
+                        borderRadius: BorderRadius.circular(22)),
+                      child: const Icon(Icons.mic, color: kWhite, size: 22)),
+                    const SizedBox(width: 12),
+                    Expanded(child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('No recordings yet',
+                          style: TextStyle(fontSize: 13,
+                            fontWeight: FontWeight.w700, color: kText)),
+                        Text('Past classes will appear here',
+                          style: TextStyle(fontSize: 11,
+                            color: kTextLight.withOpacity(0.6))),
+                      ],
+                    )),
+                  ]),
+                );
+              }
+              return Column(
+                children: snap.data!.docs.map((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  final ts = data['endedAt'] as Timestamp?;
+                  final date = ts != null
+                    ? DateFormat('EEE, MMM d · h:mm a').format(ts.toDate())
+                    : 'Recent';
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: kMilk,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: kGold.withOpacity(0.15))),
+                    child: Row(children: [
+                      Container(
+                        width: 40, height: 40,
+                        decoration: BoxDecoration(
+                          color: kGold.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(20)),
+                        child: const Icon(Icons.mic, color: kGold, size: 20)),
+                      const SizedBox(width: 10),
+                      Expanded(child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(data['title'] ?? 'Class Recording',
+                            style: const TextStyle(fontSize: 13,
+                              fontWeight: FontWeight.w700, color: kText)),
+                          Text(date,
+                            style: TextStyle(fontSize: 11,
+                              color: kTextLight.withOpacity(0.6))),
+                        ],
+                      )),
+                      const Icon(Icons.play_circle_outline,
+                        color: kGold, size: 24),
+                    ]),
+                  );
+                }).toList(),
+              );
+            },
           ),
         ],
       ),
@@ -899,6 +959,18 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
     await NotificationService.sendMeetingStarted(
       _user?.displayName ?? 'Someone');
     await _joinMeeting(roomCode, role);
+  }
+
+  Future<void> _endMeetingAndRecord(String roomCode) async {
+    final user = FirebaseAuth.instance.currentUser;
+    await FirebaseFirestore.instance.collection('recordings').add({
+      'roomCode': roomCode,
+      'endedAt': FieldValue.serverTimestamp(),
+      'endedBy': user?.displayName ?? 'Member',
+      'uid': user?.uid,
+      'title': 'Lifestones Class - $roomCode',
+    });
+    await FirebaseService.endMeeting(roomCode);
   }
 
   Future<void> _joinMeeting(String roomCode, String role) async {
@@ -1558,19 +1630,41 @@ class _MessagesScreenState extends State<MessagesScreen> {
   final User? _user = FirebaseAuth.instance.currentUser;
   final _msgCtrl = TextEditingController();
   final _scrollCtrl = ScrollController();
+  bool _isTyping = false;
+
+  void _onTypingChanged(String val) {
+    final typing = val.isNotEmpty;
+    if (typing != _isTyping) {
+      _isTyping = typing;
+      FirebaseFirestore.instance
+        .collection('typing')
+        .doc(_user?.uid)
+        .set({
+          'name': _user?.displayName ?? 'Member',
+          'isTyping': typing,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+    }
+  }
 
   Future<void> _sendMessage() async {
     final text = _msgCtrl.text.trim();
     if (text.isEmpty) return;
     _msgCtrl.clear();
+    _isTyping = false;
+    FirebaseFirestore.instance
+      .collection('typing')
+      .doc(_user?.uid)
+      .set({'isTyping': false, 'name': _user?.displayName ?? 'Member',
+            'updatedAt': FieldValue.serverTimestamp()});
     await FirebaseService.sendMessage(
       text: text,
       senderName: _user?.displayName ?? 'Member',
       senderUid: _user?.uid ?? '',
       senderPhoto: _user?.photoURL ?? '',
     );
-    await NotificationService.sendNewMessage(
-      _user?.displayName ?? 'Member', text);
+    // Only notify OTHERS - not the sender
+    // FCM handles this via Cloud Functions trigger on Firestore
   }
 
   @override
@@ -1642,6 +1736,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 },
               ),
             ),
+            _buildTypingIndicator(),
             _buildInputBar(),
           ],
         ),
@@ -1771,6 +1866,32 @@ class _MessagesScreenState extends State<MessagesScreen> {
     );
   }
 
+  Widget _buildTypingIndicator() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+        .collection('typing')
+        .where('isTyping', isEqualTo: true)
+        .snapshots(),
+      builder: (ctx, snap) {
+        if (!snap.hasData || snap.data!.docs.isEmpty) return const SizedBox();
+        final typers = snap.data!.docs
+          .where((d) => d.id != _user?.uid)
+          .map((d) => (d.data() as Map)['name'] as String? ?? 'Someone')
+          .toList();
+        if (typers.isEmpty) return const SizedBox();
+        return Padding(
+          padding: const EdgeInsets.only(left: 16, bottom: 4),
+          child: Text(
+            '${typers.join(', ')} ${typers.length == 1 ? 'is' : 'are'} typing...',
+            style: TextStyle(fontSize: 11,
+              color: kTextLight.withOpacity(0.6),
+              fontStyle: FontStyle.italic),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildInputBar() {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -1786,6 +1907,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
               controller: _msgCtrl,
               maxLines: null,
               style: const TextStyle(color: kText, fontSize: 15),
+              onChanged: _onTypingChanged,
               decoration: InputDecoration(
                 hintText: 'Say hi, share a scripture... 🙏',
                 hintStyle: TextStyle(color: kTextLight.withOpacity(0.4),

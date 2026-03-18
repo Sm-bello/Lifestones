@@ -69,7 +69,8 @@ class FirebaseService {
   }) async {
     final roomCode = topic.toUpperCase().replaceAll(' ', '').substring(
       0, topic.length > 8 ? 8 : topic.length);
-    final doc = await _db.collection('meetings').add({
+    // Use set() with fixed doc ID so all users see the SAME document
+    await _db.collection('meetings').doc('current_live').set({
       'topic': topic,
       'roomCode': roomCode,
       'starterName': starterName,
@@ -80,6 +81,13 @@ class FirebaseService {
       'participants': [starterUid],
     });
     return roomCode;
+  }
+
+  static Future<void> endMeeting(String roomCode) async {
+    await _db.collection('meetings').doc('current_live').update({
+      'isLive': false,
+      'endedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   static Future<void> endMeeting(String meetingId) async {
@@ -93,7 +101,6 @@ class FirebaseService {
     return _db
         .collection('meetings')
         .where('isLive', isEqualTo: true)
-        .orderBy('startedAt', descending: true)
         .snapshots();
   }
 
