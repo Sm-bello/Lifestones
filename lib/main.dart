@@ -112,6 +112,9 @@ class SplashScreen extends StatelessWidget {
             Text('Lifestones',
               style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800,
                 color: kGold, letterSpacing: -1)),
+            SizedBox(height: 8),
+            Text('v1.0.0',
+              style: TextStyle(fontSize: 12, color: kTextLight)),
             SizedBox(height: 24),
             CircularProgressIndicator(color: kGold, strokeWidth: 2),
           ],
@@ -480,9 +483,53 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           child: const Center(child: Text('✝',
             style: TextStyle(fontSize: 20, color: kWhite)))),
         const SizedBox(width: 10),
-        const Text('Lifestones',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800,
-            color: kGold)),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Lifestones',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800,
+                color: kGold)),
+            StreamBuilder<DocumentSnapshot>(
+              stream: FirebaseFirestore.instance
+                .collection('app_config')
+                .doc('version')
+                .snapshots(),
+              builder: (ctx, snap) {
+                if (!snap.hasData) return const SizedBox();
+                final data = snap.data?.data() as Map<String, dynamic>?;
+                final latest = data?['latest_version'] ?? '1.0.0';
+                const current = '1.0.0';
+                if (latest != current) {
+                  return GestureDetector(
+                    onTap: () {
+                      final url = data?['download_url'] ?? '';
+                      if (url.isNotEmpty) {
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                          SnackBar(
+                            content: Text('Update v\$latest available! Download from your Pastor.'),
+                            backgroundColor: kGold,
+                            duration: const Duration(seconds: 5),
+                          ),
+                        );
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: kRed,
+                        borderRadius: BorderRadius.circular(8)),
+                      child: Text('Update v\$latest',
+                        style: const TextStyle(
+                          color: kWhite, fontSize: 9,
+                          fontWeight: FontWeight.w700))),
+                  );
+                }
+                return const SizedBox();
+              },
+            ),
+          ],
+        ),
         const Spacer(),
         Container(
           width: 38, height: 38,
