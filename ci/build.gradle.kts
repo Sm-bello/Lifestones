@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.lifestones.church"
+    namespace = "com.example.lifestones"
     compileSdk = 36
     ndkVersion = "27.0.12077973"
 
@@ -21,7 +21,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.lifestones.church"
+        applicationId = "com.example.lifestones"
         minSdk = 26
         targetSdk = 36
         versionCode = flutter.versionCode
