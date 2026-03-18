@@ -1717,12 +1717,12 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight),
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: kGoldNeon.withOpacity(0.6),
+            color: Color(0x99FFD700),
             blurRadius: 32, spreadRadius: 6),
           BoxShadow(
-            color: kGold.withOpacity(0.4),
+            color: Color(0x66C9973A),
             blurRadius: 16, spreadRadius: 2),
         ]),
       child: Column(
