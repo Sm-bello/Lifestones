@@ -924,7 +924,92 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
               Row(children: [
                 _roleOption(setModal, '🎤', 'Pastor',
                   'Lead the session', selectedRole == 'pastor',
-                  () => setModal(() => selectedRole = 'pastor')),
+                  () async {
+                    final pinCtrl = TextEditingController();
+                    final verified = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        backgroundColor: kWhite,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20)),
+                        title: const Text('Pastor Verification',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: kText)),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Enter your Pastor PIN to continue',
+                              style: TextStyle(
+                                color: kTextLight.withOpacity(0.7),
+                                fontSize: 13)),
+                            const SizedBox(height: 16),
+                            TextField(
+                              controller: pinCtrl,
+                              obscureText: true,
+                              keyboardType: TextInputType.number,
+                              maxLength: 4,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 8,
+                                color: kText),
+                              decoration: InputDecoration(
+                                counterText: '',
+                                hintText: '••••',
+                                hintStyle: TextStyle(
+                                  color: kTextLight.withOpacity(0.3),
+                                  letterSpacing: 8),
+                                filled: true,
+                                fillColor: kMilk,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: kGold.withOpacity(0.3))),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: kGold.withOpacity(0.3))),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                    color: kGold, width: 2))),
+                            ),
+                          ],
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: Text('Cancel',
+                              style: TextStyle(
+                                color: kTextLight.withOpacity(0.6)))),
+                          ElevatedButton(
+                            onPressed: () {
+                              if (pinCtrl.text == '7749') {
+                                Navigator.pop(ctx, true);
+                              } else {
+                                ScaffoldMessenger.of(ctx).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Wrong PIN. Try again.'),
+                                    backgroundColor: kRed));
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: kGold,
+                              foregroundColor: kWhite,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10))),
+                            child: const Text('Verify',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700))),
+                        ],
+                      ),
+                    );
+                    if (verified == true) {
+                      setModal(() => selectedRole = 'pastor');
+                    }
+                  }),
                 const SizedBox(width: 10),
                 _roleOption(setModal, '🙏', 'Member',
                   'Join & participate', selectedRole == 'member',
