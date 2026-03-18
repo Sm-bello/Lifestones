@@ -106,7 +106,21 @@ class LifestonesApp extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const SplashScreen();
           }
-          if (snapshot.hasData) return const MainShell();
+          if (snapshot.hasData) {
+            return StreamBuilder<DocumentSnapshot>(
+              stream: FirebaseFirestore.instance
+                .collection('users')
+                .doc(snapshot.data!.uid)
+                .snapshots(),
+              builder: (ctx, userSnap) {
+                if (!userSnap.hasData) return const SplashScreen();
+                final data = userSnap.data?.data() as Map<String, dynamic>?;
+                final roleSet = data?['roleSetAt'] != null;
+                if (!roleSet) return const RoleSelectionScreen();
+                return const MainShell();
+              },
+            );
+          }
           return const LoginScreen();
         },
       ),
@@ -326,6 +340,192 @@ class _LoginScreenState extends State<LoginScreen>
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class RoleSelectionScreen extends StatefulWidget {
+  const RoleSelectionScreen({super.key});
+  @override
+  State<RoleSelectionScreen> createState() => _RoleSelectionScreenState();
+}
+
+class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
+  bool _loading = false;
+
+  Future<void> _selectRole(String role) async {
+    if (role == 'pastor') {
+      final pin = await _showPinDialog();
+      if (pin != '7749') {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Wrong PIN'),
+              backgroundColor: kRed));
+        }
+        return;
+      }
+    }
+    setState(() => _loading = true);
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+        'role': role,
+        'chatApproved': role == 'pastor',
+        'roleSetAt': FieldValue.serverTimestamp(),
+      });
+    }
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const MainShell()));
+    }
+  }
+
+  Future<String?> _showPinDialog() async {
+    final ctrl = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: kWhite,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20)),
+        title: const Text('Pastor Verification',
+          style: TextStyle(fontWeight: FontWeight.w800, color: kText)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Enter your Pastor PIN',
+              style: TextStyle(color: kTextLight.withOpacity(0.7))),
+            const SizedBox(height: 16),
+            TextField(
+              controller: ctrl,
+              obscureText: true,
+              keyboardType: TextInputType.number,
+              maxLength: 4,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 28,
+                fontWeight: FontWeight.w800, letterSpacing: 8),
+              decoration: InputDecoration(
+                counterText: '',
+                hintText: '••••',
+                filled: true, fillColor: kMilk,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: kGold.withOpacity(0.3))),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: kGold, width: 2))),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, ''),
+            child: const Text('Cancel',
+              style: TextStyle(color: kTextLight))),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, ctrl.text),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: kGold, foregroundColor: kWhite,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10))),
+            child: const Text('Verify',
+              style: TextStyle(fontWeight: FontWeight.w700))),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: kMilk,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 80, height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    colors: [kGoldLight, kGold])),
+                child: const Center(child: Text('✝',
+                  style: TextStyle(fontSize: 40, color: kWhite)))),
+              const SizedBox(height: 20),
+              const Text('Welcome to Lifestones',
+                style: TextStyle(fontSize: 26,
+                  fontWeight: FontWeight.w800, color: kText)),
+              const SizedBox(height: 8),
+              Text('How are you joining the family?',
+                style: TextStyle(fontSize: 14,
+                  color: kTextLight.withOpacity(0.7))),
+              const SizedBox(height: 48),
+              Row(children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: _loading ? null : () => _selectRole('pastor'),
+                    child: Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: kWhite,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: kGold.withOpacity(0.3)),
+                        boxShadow: [BoxShadow(
+                          color: kGoldNeon.withOpacity(0.15),
+                          blurRadius: 16)]),
+                      child: Column(children: [
+                        const Text('🎤', style: TextStyle(fontSize: 36)),
+                        const SizedBox(height: 8),
+                        const Text('Pastor',
+                          style: TextStyle(fontSize: 18,
+                            fontWeight: FontWeight.w800, color: kText)),
+                        const SizedBox(height: 4),
+                        Text('Full access + PIN',
+                          style: TextStyle(fontSize: 11,
+                            color: kTextLight.withOpacity(0.6)),
+                          textAlign: TextAlign.center),
+                      ]),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: _loading ? null : () => _selectRole('member'),
+                    child: Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: kWhite,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: kGold.withOpacity(0.3)),
+                        boxShadow: [BoxShadow(
+                          color: kGoldNeon.withOpacity(0.15),
+                          blurRadius: 16)]),
+                      child: Column(children: [
+                        const Text('🙏', style: TextStyle(fontSize: 36)),
+                        const SizedBox(height: 8),
+                        const Text('Member',
+                          style: TextStyle(fontSize: 18,
+                            fontWeight: FontWeight.w800, color: kText)),
+                        const SizedBox(height: 4),
+                        Text('Join & participate',
+                          style: TextStyle(fontSize: 11,
+                            color: kTextLight.withOpacity(0.6)),
+                          textAlign: TextAlign.center),
+                      ]),
+                    ),
+                  ),
+                ),
+              ]),
+              const SizedBox(height: 32),
+              if (_loading)
+                const CircularProgressIndicator(color: kGold),
+            ],
           ),
         ),
       ),
@@ -1502,7 +1702,14 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
   }
 
   Widget _buildLiveCard(Map<String, dynamic> data) {
-    return Container(
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.95, end: 1.05),
+      duration: const Duration(milliseconds: 1000),
+      curve: Curves.easeInOut,
+      onEnd: () => setState(() {}),
+      builder: (ctx, scale, child) => Transform.scale(
+        scale: scale, child: child),
+      child: Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -1510,9 +1717,14 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight),
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(
-          color: kGoldNeon.withOpacity(0.4),
-          blurRadius: 24, spreadRadius: 2)]),
+        boxShadow: [
+          BoxShadow(
+            color: kGoldNeon.withOpacity(0.6),
+            blurRadius: 32, spreadRadius: 6),
+          BoxShadow(
+            color: kGold.withOpacity(0.4),
+            blurRadius: 16, spreadRadius: 2),
+        ]),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2114,7 +2326,37 @@ class _MessagesScreenState extends State<MessagesScreen> {
     }
   }
 
+  Future<bool> _checkChatApproval() async {
+    final doc = await FirebaseFirestore.instance
+      .collection('users').doc(_user?.uid).get();
+    final data = doc.data() as Map<String, dynamic>?;
+    return data?['chatApproved'] == true;
+  }
+
+  Future<void> _requestChatAccess() async {
+    await FirebaseFirestore.instance
+      .collection('chat_requests').doc(_user?.uid).set({
+        'uid': _user?.uid,
+        'name': _user?.displayName ?? 'Member',
+        'photo': _user?.photoURL ?? '',
+        'requestedAt': FieldValue.serverTimestamp(),
+        'status': 'pending',
+      });
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✅ Request sent! Wait for Pastor approval.'),
+          backgroundColor: kGold,
+          duration: Duration(seconds: 4)));
+    }
+  }
+
   Future<void> _sendMessage() async {
+    final approved = await _checkChatApproval();
+    if (!approved) {
+      await _requestChatAccess();
+      return;
+    }
     final text = _msgCtrl.text.trim();
     if (text.isEmpty) return;
     _msgCtrl.clear();
@@ -2130,8 +2372,24 @@ class _MessagesScreenState extends State<MessagesScreen> {
       senderUid: _user?.uid ?? '',
       senderPhoto: _user?.photoURL ?? '',
     );
-    // Only notify OTHERS - not the sender
-    // FCM handles this via Cloud Functions trigger on Firestore
+    // Notify all other users via stored FCM tokens
+    try {
+      final usersSnap = await FirebaseFirestore.instance
+        .collection('users').get();
+      for (final doc in usersSnap.docs) {
+        if (doc.id == _user?.uid) continue;
+        final token = doc.data()['fcmToken'] as String?;
+        if (token != null) {
+          await FirebaseFirestore.instance.collection('notifications').add({
+            'token': token,
+            'title': _user?.displayName ?? 'Member',
+            'body': text.length > 50 ? '\${text.substring(0, 50)}...' : text,
+            'type': 'chat',
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+        }
+      }
+    } catch (e) { debugPrint('Notify error: \$e'); }
   }
 
   @override
@@ -2150,19 +2408,56 @@ class _MessagesScreenState extends State<MessagesScreen> {
                       fontWeight: FontWeight.w800, color: kText,
                       letterSpacing: -0.5)),
                   const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: kGreen.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: kGreen.withOpacity(0.3))),
-                    child: Row(children: [
-                      Icon(Icons.circle, color: kGreen, size: 7),
-                      const SizedBox(width: 4),
-                      Text('Live', style: TextStyle(color: kGreen,
-                        fontSize: 11, fontWeight: FontWeight.w600)),
-                    ])),
+                  StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseFirestore.instance
+                      .collection('users').doc(_user?.uid).snapshots(),
+                    builder: (ctx, snap) {
+                      final data = snap.data?.data() as Map<String, dynamic>?;
+                      final isPastor = data?['role'] == 'pastor';
+                      if (!isPastor) return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: kGreen.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: kGreen.withOpacity(0.3))),
+                        child: Row(children: [
+                          Icon(Icons.circle, color: kGreen, size: 7),
+                          const SizedBox(width: 4),
+                          Text('Live', style: TextStyle(color: kGreen,
+                            fontSize: 11, fontWeight: FontWeight.w600)),
+                        ]));
+                      return GestureDetector(
+                        onTap: _showChatRequests,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: kGold.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: kGold.withOpacity(0.3))),
+                          child: StreamBuilder<QuerySnapshot>(
+                            stream: FirebaseFirestore.instance
+                              .collection('chat_requests')
+                              .where('status', isEqualTo: 'pending')
+                              .snapshots(),
+                            builder: (ctx, reqSnap) {
+                              final count = reqSnap.data?.docs.length ?? 0;
+                              return Row(children: [
+                                const Icon(Icons.manage_accounts,
+                                  color: kGold, size: 14),
+                                const SizedBox(width: 4),
+                                Text('Manage${count > 0 ? " ($count)" : ""}',
+                                  style: const TextStyle(color: kGoldDark,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600)),
+                              ]);
+                            },
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
@@ -2176,16 +2471,51 @@ class _MessagesScreenState extends State<MessagesScreen> {
                   }
                   final messages = snap.data!.docs;
                   if (messages.isEmpty) {
-                    return Center(child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text('🕊️', style: TextStyle(fontSize: 48)),
-                        const SizedBox(height: 12),
-                        Text('Be the first to say hello!',
-                          style: TextStyle(fontSize: 16,
-                            color: kTextLight.withOpacity(0.6))),
-                      ],
-                    ));
+                    return StreamBuilder<DocumentSnapshot>(
+                      stream: FirebaseFirestore.instance
+                        .collection('users').doc(_user?.uid).snapshots(),
+                      builder: (ctx, userSnap) {
+                        final data = userSnap.data?.data()
+                          as Map<String, dynamic>?;
+                        final approved = data?['chatApproved'] == true;
+                        final role = data?['role'] ?? 'member';
+                        if (!approved && role != 'pastor') {
+                          return Center(child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text('🔒',
+                                style: TextStyle(fontSize: 48)),
+                              const SizedBox(height: 12),
+                              const Text('Chat Access Required',
+                                style: TextStyle(fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: kText)),
+                              const SizedBox(height: 8),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 40),
+                                child: Text(
+                                  'Tap the send button to request '
+                                  'chat access from your Pastor.',
+                                  style: TextStyle(fontSize: 13,
+                                    color: kTextLight.withOpacity(0.6)),
+                                  textAlign: TextAlign.center)),
+                            ],
+                          ));
+                        }
+                        return Center(child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text('🕊️',
+                              style: TextStyle(fontSize: 48)),
+                            const SizedBox(height: 12),
+                            Text('Be the first to say hello!',
+                              style: TextStyle(fontSize: 16,
+                                color: kTextLight.withOpacity(0.6))),
+                          ],
+                        ));
+                      },
+                    );
                   }
                   return ListView.builder(
                     controller: _scrollCtrl,
@@ -2329,6 +2659,159 @@ class _MessagesScreenState extends State<MessagesScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showChatRequests() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: kWhite,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      builder: (ctx) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.7,
+        builder: (_, ctrl) => Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(children: [
+                const Text('Chat Access Requests',
+                  style: TextStyle(fontSize: 20,
+                    fontWeight: FontWeight.w800, color: kText)),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => Navigator.pop(ctx),
+                  child: const Icon(Icons.close, color: kGold)),
+              ])),
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                  .collection('chat_requests')
+                  .orderBy('requestedAt', descending: true)
+                  .snapshots(),
+                builder: (ctx, snap) {
+                  if (!snap.hasData || snap.data!.docs.isEmpty) {
+                    return Center(
+                      child: Text('No pending requests',
+                        style: TextStyle(
+                          color: kTextLight.withOpacity(0.5))));
+                  }
+                  return ListView.builder(
+                    controller: ctrl,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    itemCount: snap.data!.docs.length,
+                    itemBuilder: (_, i) {
+                      final doc = snap.data!.docs[i];
+                      final data = doc.data() as Map<String, dynamic>;
+                      final status = data['status'] ?? 'pending';
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: kMilk,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: status == 'pending'
+                              ? kGold.withOpacity(0.3)
+                              : kGreen.withOpacity(0.3))),
+                        child: Row(children: [
+                          Container(
+                            width: 40, height: 40,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: kGold.withOpacity(0.15)),
+                            child: Center(child: Text(
+                              (data['name'] ?? 'M')[0].toUpperCase(),
+                              style: const TextStyle(
+                                color: kGold, fontWeight: FontWeight.w800,
+                                fontSize: 16)))),
+                          const SizedBox(width: 10),
+                          Expanded(child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(data['name'] ?? 'Member',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700, color: kText)),
+                              Text(status == 'approved'
+                                ? '✅ Approved'
+                                : status == 'rejected'
+                                  ? '❌ Rejected'
+                                  : '⏳ Pending',
+                                style: TextStyle(fontSize: 11,
+                                  color: kTextLight.withOpacity(0.6))),
+                            ],
+                          )),
+                          if (status == 'pending') Row(children: [
+                            GestureDetector(
+                              onTap: () async {
+                                await FirebaseFirestore.instance
+                                  .collection('users').doc(doc.id)
+                                  .update({'chatApproved': true});
+                                await doc.reference.update({
+                                  'status': 'approved'});
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: kGreen,
+                                  borderRadius: BorderRadius.circular(10)),
+                                child: const Text('Approve',
+                                  style: TextStyle(color: kWhite,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700)))),
+                            const SizedBox(width: 6),
+                            GestureDetector(
+                              onTap: () async {
+                                await FirebaseFirestore.instance
+                                  .collection('users').doc(doc.id)
+                                  .update({'chatApproved': false});
+                                await doc.reference.update({
+                                  'status': 'rejected'});
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: kRed,
+                                  borderRadius: BorderRadius.circular(10)),
+                                child: const Text('Reject',
+                                  style: TextStyle(color: kWhite,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700)))),
+                          ]) else if (status == 'approved')
+                            GestureDetector(
+                              onTap: () async {
+                                await FirebaseFirestore.instance
+                                  .collection('users').doc(doc.id)
+                                  .update({'chatApproved': false});
+                                await doc.reference.update({
+                                  'status': 'rejected'});
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: kRed.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: kRed.withOpacity(0.3))),
+                                child: const Text('Remove',
+                                  style: TextStyle(color: kRed,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600)))),
+                        ]),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

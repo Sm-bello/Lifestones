@@ -77,9 +77,9 @@ class FirebaseService {
     required String starterUid,
     required String role,
   }) async {
-    final roomCode = topic.toUpperCase().replaceAll(' ', '').substring(
-      0, topic.length > 8 ? 8 : topic.length);
-    // Use set() with fixed doc ID so all users see the SAME document
+    final roomCode = DateTime.now().millisecondsSinceEpoch
+      .toString().substring(7);
+    // Use set() with fixed doc ID so all users see the SAME document instantly
     await _db.collection('meetings').doc('current_live').set({
       'topic': topic,
       'roomCode': roomCode,
@@ -90,6 +90,25 @@ class FirebaseService {
       'isLive': true,
       'participants': [starterUid],
     });
+
+    // Notify all users via FCM tokens stored in Firestore
+    try {
+      final usersSnap = await _db.collection('users').get();
+      for (final doc in usersSnap.docs) {
+        if (doc.id == starterUid) continue;
+        final token = doc.data()['fcmToken'] as String?;
+        if (token != null && token.isNotEmpty) {
+          await _db.collection('notifications').add({
+            'token': token,
+            'title': '⛪ Class Starting Now!',
+            'body': '\$starterName started "\$topic" — Join now!',
+            'type': 'meeting_started',
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+        }
+      }
+    } catch (e) { debugPrint('FCM notify error: \$e'); }
+
     return roomCode;
   }
 
