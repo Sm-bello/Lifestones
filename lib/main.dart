@@ -841,10 +841,34 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
       return;
     }
     try {
-      final url = Uri.parse('https://meet.jit.si/${'Lifestones-$roomCode'}');
-    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      print('Could not launch sanctuary');
-    }
+      final jitsi = JitsiMeet();
+      await jitsi.join(JitsiMeetConferenceOptions(
+        room: 'Lifestones-$roomCode',
+        userInfo: JitsiMeetUserInfo(
+          displayName: _user?.displayName ?? 'Member',
+          email: _user?.email,
+        ),
+        configOverrides: {
+          'startWithAudioMuted': false,
+          'startWithVideoMuted': true,
+          'disableDeepLinking': true,
+          'prejoinPageEnabled': false,
+          'lobby.enabled': false,
+          'p2p.enabled': true,
+          'channelLastN': 10,
+        },
+        featureFlags: {
+          'recording.enabled': role == 'pastor',
+          'live-streaming.enabled': false,
+          'raise-hand.enabled': true,
+          'chat.enabled': true,
+          'pip.enabled': true,
+          'toolbox.alwaysVisible': true,
+          'invite.enabled': false,
+          'video-mute.enabled': false,
+          'meeting-password.enabled': false,
+        },
+      ));
     } catch (e) { debugPrint('Join error: $e'); }
   }
 
