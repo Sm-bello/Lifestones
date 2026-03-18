@@ -8,7 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:jitsi_meet_flutter_sdk/jitsi_meet_flutter_sdk.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'dart:io';
 import 'notification_service.dart';
@@ -840,34 +840,10 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
       return;
     }
     try {
-      final jitsi = JitsiMeet();
-      await jitsi.join(JitsiMeetConferenceOptions(
-        room: 'Lifestones-$roomCode',
-        userInfo: JitsiMeetUserInfo(
-          displayName: _user?.displayName ?? 'Member',
-          email: _user?.email,
-        ),
-        configOverrides: {
-          'startWithAudioMuted': false,
-          'startWithVideoMuted': true,
-          'disableDeepLinking': true,
-          'prejoinPageEnabled': false,
-          'lobby.enabled': false,
-          'p2p.enabled': true,
-          'channelLastN': 10,
-        },
-        featureFlags: {
-          'recording.enabled': role == 'pastor',
-          'live-streaming.enabled': false,
-          'raise-hand.enabled': true,
-          'chat.enabled': true,
-          'pip.enabled': true,
-          'toolbox.alwaysVisible': true,
-          'invite.enabled': false,
-          'video-mute.enabled': false,
-          'meeting-password.enabled': false,
-        },
-      ));
+      final url = Uri.parse('https://meet.jit.si/${'Lifestones-$roomCode'}');
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      print('Could not launch sanctuary');
+    }
     } catch (e) { debugPrint('Join error: $e'); }
   }
 
