@@ -21,7 +21,6 @@ dependencies:
   just_audio: ^0.9.40
   jitsi_meet_flutter_sdk: ^11.6.0
   share_plus: ^10.0.2
-  jitsi_meet_flutter_sdk: ^11.6.0
   intl: ^0.19.0
   cached_network_image: ^3.4.1
   uuid: ^4.5.1
