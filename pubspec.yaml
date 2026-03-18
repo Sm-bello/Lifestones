@@ -20,6 +20,10 @@ dependencies:
   image_picker: ^1.1.2
   just_audio: ^0.9.40
   jitsi_meet_flutter_sdk: ^11.6.0
+  flutter_sound: ^9.2.13
+  permission_handler: ^11.3.1
+  dio: ^5.4.0
+  path_provider: ^2.1.2
   share_plus: ^10.0.2
   intl: ^0.19.0
   cached_network_image: ^3.4.1

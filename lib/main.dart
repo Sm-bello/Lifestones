@@ -12,6 +12,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:jitsi_meet_flutter_sdk/jitsi_meet_flutter_sdk.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'dart:io';
+import 'package:flutter_sound/flutter_sound.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:just_audio/just_audio.dart';
 import 'notification_service.dart';
 import 'firebase_options.dart';
 import 'firebase_service.dart';
@@ -783,6 +788,57 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     );
   }
 
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  bool _isPlaying = false;
+  String _currentUrl = '';
+
+  Future<void> _playRecording(String url, BuildContext ctx) async {
+    if (url.isEmpty) return;
+    try {
+      if (_isPlaying && _currentUrl == url) {
+        await _audioPlayer.stop();
+        setState(() => _isPlaying = false);
+        return;
+      }
+      setState(() { _isPlaying = true; _currentUrl = url; });
+      await _audioPlayer.setUrl(url);
+      await _audioPlayer.play();
+      _audioPlayer.playerStateStream.listen((state) {
+        if (state.processingState == ProcessingState.completed) {
+          setState(() => _isPlaying = false);
+        }
+      });
+    } catch (e) {
+      debugPrint('Play error: \$e');
+      setState(() => _isPlaying = false);
+    }
+  }
+
+  Future<void> _downloadRecording(
+    String url, String title, BuildContext ctx) async {
+    if (url.isEmpty) return;
+    try {
+      final status = await Permission.storage.request();
+      if (!status.isGranted) return;
+      final dir = await getExternalStorageDirectory();
+      final path = '\${dir!.path}/\$title.aac';
+      final dio = Dio();
+      await dio.download(url, path,
+        onReceiveProgress: (received, total) {
+          debugPrint('Download: \$received/\$total');
+        });
+      if (ctx.mounted) {
+        ScaffoldMessenger.of(ctx).showSnackBar(
+          SnackBar(
+            content: Text('✅ Saved to Downloads: \$title'),
+            backgroundColor: kGreen,
+            duration: const Duration(seconds: 3)));
+      }
+    } catch (e) {
+      debugPrint('Download error: \$e');
+    }
+  }
+
   Widget _buildAudioLayer() {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -870,8 +926,20 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                               color: kTextLight.withOpacity(0.6))),
                         ],
                       )),
-                      const Icon(Icons.play_circle_outline,
-                        color: kGold, size: 24),
+                      Row(children: [
+                        GestureDetector(
+                          onTap: () => _playRecording(
+                            data['downloadUrl'] ?? '', ctx),
+                          child: const Icon(Icons.play_circle_outline,
+                            color: kGold, size: 28)),
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: () => _downloadRecording(
+                            data['downloadUrl'] ?? '',
+                            data['title'] ?? 'recording', ctx),
+                          child: const Icon(Icons.download_outlined,
+                            color: kGold, size: 24)),
+                      ]),
                     ]),
                   );
                 }).toList(),
@@ -892,6 +960,74 @@ class MeetingsScreen extends StatefulWidget {
 
 class _MeetingsScreenState extends State<MeetingsScreen> {
   final User? _user = FirebaseAuth.instance.currentUser;
+  FlutterSoundRecorder? _recorder;
+  bool _isRecording = false;
+  String? _recordingPath;
+
+  @override
+  void initState() {
+    super.initState();
+    _recorder = FlutterSoundRecorder();
+  }
+
+  @override
+  void dispose() {
+    _recorder?.closeRecorder();
+    super.dispose();
+  }
+
+  Future<void> _startRecording(String roomCode) async {
+    final micStatus = await Permission.microphone.request();
+    final storageStatus = await Permission.storage.request();
+    if (!micStatus.isGranted) return;
+    final dir = await getApplicationDocumentsDirectory();
+    _recordingPath = '\${dir.path}/recording_\$roomCode\_\${DateTime.now().millisecondsSinceEpoch}.aac';
+    await _recorder!.openRecorder();
+    await _recorder!.startRecorder(
+      toFile: _recordingPath,
+      codec: Codec.aacADTS,
+    );
+    setState(() => _isRecording = true);
+    debugPrint('Recording started: \$_recordingPath');
+  }
+
+  Future<void> _stopRecordingAndUpload(String roomCode) async {
+    if (!_isRecording || _recorder == null) return;
+    await _recorder!.stopRecorder();
+    setState(() => _isRecording = false);
+    if (_recordingPath == null) return;
+    final file = File(_recordingPath!);
+    if (!await file.exists()) return;
+
+    try {
+      // Upload to Firebase Storage
+      final ref = FirebaseStorage.instance
+        .ref('recordings/\$roomCode/\${DateTime.now().millisecondsSinceEpoch}.aac');
+      final uploadTask = await ref.putFile(file);
+      final downloadUrl = await uploadTask.ref.getDownloadURL();
+
+      // Save to Firestore
+      await FirebaseFirestore.instance.collection('recordings').add({
+        'roomCode': roomCode,
+        'downloadUrl': downloadUrl,
+        'title': 'Lifestones Class - \${DateTime.now().toString().substring(0, 10)}',
+        'duration': '',
+        'uploadedBy': _user?.displayName ?? 'Pastor',
+        'uploadedAt': FieldValue.serverTimestamp(),
+        'endedAt': FieldValue.serverTimestamp(),
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Recording saved for all members!'),
+            backgroundColor: kGreen,
+            duration: Duration(seconds: 4)));
+      }
+    } catch (e) {
+      debugPrint('Upload error: \$e');
+    }
+  }
 
   void _showRoleDialog({required bool isStarting, String? roomCode}) {
     String selectedRole = 'member';
@@ -1084,6 +1220,9 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
     );
     await NotificationService.sendMeetingStarted(
       _user?.displayName ?? 'Someone');
+    if (role == 'pastor') {
+      await _startRecording(roomCode);
+    }
     await _joinMeeting(roomCode, role);
   }
 
