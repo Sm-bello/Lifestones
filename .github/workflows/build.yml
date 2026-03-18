@@ -40,6 +40,7 @@ jobs:
           cp -r lib/. /tmp/backup/lib/
           cp android/app/google-services.json /tmp/backup/ 2>/dev/null || echo "no gservices"
           cp ci/build.gradle.kts /tmp/backup/
+          cp assets/logo.png /tmp/backup/logo.png 2>/dev/null || true
 
       - name: Delete old Android folder
         run: rm -rf android ios linux macos web windows
@@ -53,6 +54,11 @@ jobs:
           cp -r /tmp/backup/lib/. lib/
           cp /tmp/backup/google-services.json android/app/ 2>/dev/null || echo "no gservices"
           cp /tmp/backup/build.gradle.kts android/app/build.gradle.kts
+          mkdir -p assets
+          cp /tmp/backup/logo.png assets/logo.png 2>/dev/null || true
+          for size in hdpi mdpi xhdpi xxhdpi xxxhdpi; do
+            cp assets/logo.png android/app/src/main/res/mipmap-\${size}/ic_launcher.png 2>/dev/null || true
+          done
           cp ci/AndroidManifest.xml android/app/src/main/AndroidManifest.xml
           mkdir -p android/app/src/main/res/values
           cp ci/strings.xml android/app/src/main/res/values/strings.xml

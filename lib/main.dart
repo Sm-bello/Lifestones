@@ -43,6 +43,16 @@ Future<User?> signInWithGoogle() async {
     );
     final result = await _auth.signInWithCredential(credential);
     await FirebaseService.createOrUpdateUser();
+    // Store FCM token for push notifications
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token != null && result.user != null) {
+        await FirebaseFirestore.instance
+          .collection('users')
+          .doc(result.user!.uid)
+          .update({'fcmToken': token});
+      }
+    } catch (e) { debugPrint('FCM token error: \$e'); }
     return result.user;
   } catch (e) {
     debugPrint('Sign-in error: $e');
@@ -438,7 +448,14 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     return Scaffold(
       backgroundColor: kMilkDeep,
       body: SafeArea(
-        child: CustomScrollView(
+        child: RefreshIndicator(
+          color: kGold,
+          onRefresh: () async {
+            setState(() {});
+            await Future.delayed(const Duration(milliseconds: 500));
+          },
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverToBoxAdapter(
               child: Padding(
@@ -935,11 +952,18 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
     return Scaffold(
       backgroundColor: kMilkDeep,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        child: RefreshIndicator(
+          color: kGold,
+          onRefresh: () async {
+            setState(() {});
+            await Future.delayed(const Duration(milliseconds: 500));
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               const Text('The Sanctuary',
                 style: TextStyle(fontSize: 28,
                   fontWeight: FontWeight.w800, color: kText,
@@ -965,6 +989,7 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
               _buildScheduleSection(),
             ],
           ),
+        ),
         ),
       ),
     );
@@ -1067,6 +1092,16 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
           style: TextStyle(fontSize: 13, height: 1.5,
             color: kTextLight.withOpacity(0.7)),
           textAlign: TextAlign.center),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          decoration: BoxDecoration(
+            color: kMilk,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: kGold.withOpacity(0.2))),
+          child: Text('⬇️ Pull down to refresh',
+            style: TextStyle(fontSize: 11,
+              color: kTextLight.withOpacity(0.6)))),
       ]),
     );
   }
