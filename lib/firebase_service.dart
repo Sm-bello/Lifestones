@@ -90,12 +90,7 @@ class FirebaseService {
     });
   }
 
-  static Future<void> endMeeting(String meetingId) async {
-    await _db.collection('meetings').doc(meetingId).update({
-      'isLive': false,
-      'endedAt': FieldValue.serverTimestamp(),
-    });
-  }
+
 
   static Stream<QuerySnapshot> getLiveMeetings() {
     return _db
