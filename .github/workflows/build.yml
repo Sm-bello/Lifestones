@@ -108,20 +108,24 @@ jobs:
         run: flutter pub get
 
       - name: Build Release APK
-        run: flutter build apk --release --android-skip-build-dependency-validation
+        run: flutter build apk --release --split-per-abi --android-skip-build-dependency-validation
 
-      - name: Sign APK
+      - name: Sign APKs
         run: |
-          $ANDROID_SDK_ROOT/build-tools/34.0.0/apksigner sign \
-            --ks android/app/lifestones-release.jks \
-            --ks-key-alias ${{ secrets.KEY_ALIAS }} \
-            --ks-pass pass:${{ secrets.KEYSTORE_PASSWORD }} \
-            --key-pass pass:${{ secrets.KEY_PASSWORD }} \
-            --out build/app/outputs/flutter-apk/Lifestones-signed.apk \
-            build/app/outputs/flutter-apk/app-release.apk
+          for apk in build/app/outputs/flutter-apk/app-*-release.apk; do
+            out="${apk/app-/Lifestones-}"
+            out="${out/-release/}"
+            $ANDROID_SDK_ROOT/build-tools/34.0.0/apksigner sign \
+              --ks android/app/lifestones-release.jks \
+              --ks-key-alias ${{ secrets.KEY_ALIAS }} \
+              --ks-pass pass:${{ secrets.KEYSTORE_PASSWORD }} \
+              --key-pass pass:${{ secrets.KEY_PASSWORD }} \
+              --out "$out" "$apk"
+            echo "Signed: $out"
+          done
 
-      - name: Upload Signed APK
+      - name: Upload Signed APKs
         uses: actions/upload-artifact@v4
         with:
           name: Lifestones-release-signed
-          path: build/app/outputs/flutter-apk/Lifestones-signed.apk
+          path: build/app/outputs/flutter-apk/Lifestones-*.apk
