@@ -53,6 +53,9 @@ jobs:
           cp -r /tmp/backup/lib/. lib/
           cp /tmp/backup/google-services.json android/app/ 2>/dev/null || echo "no gservices"
           cp /tmp/backup/build.gradle.kts android/app/build.gradle.kts
+          cp ci/AndroidManifest.xml android/app/src/main/AndroidManifest.xml
+          mkdir -p android/app/src/main/res/values
+          cp ci/strings.xml android/app/src/main/res/values/strings.xml
 
       - name: Fix gradle.properties
         run: |
