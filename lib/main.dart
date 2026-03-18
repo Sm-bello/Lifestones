@@ -106,21 +106,7 @@ class LifestonesApp extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const SplashScreen();
           }
-          if (snapshot.hasData) {
-            return StreamBuilder<DocumentSnapshot>(
-              stream: FirebaseFirestore.instance
-                .collection('users')
-                .doc(snapshot.data!.uid)
-                .snapshots(),
-              builder: (ctx, userSnap) {
-                if (!userSnap.hasData) return const SplashScreen();
-                final data = userSnap.data?.data() as Map<String, dynamic>?;
-                final roleSet = data?['roleSetAt'] != null;
-                if (!roleSet) return const RoleSelectionScreen();
-                return const MainShell();
-              },
-            );
-          }
+          if (snapshot.hasData) return const MainShell();
           return const LoginScreen();
         },
       ),
