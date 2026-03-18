@@ -32,6 +32,16 @@ class FirebaseService {
     return _db.collection('users').doc(uid).snapshots();
   }
 
+  static Future<void> updatePhone(String phone) async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return;
+    await _db.collection('users').doc(uid).update({'phone': phone});
+  }
+
+  static Future<void> deleteMeeting(String docId) async {
+    await _db.collection('meetings').doc(docId).delete();
+  }
+
   static Future<void> updateBio(String bio) async {
     final user = _auth.currentUser;
     if (user == null) return;

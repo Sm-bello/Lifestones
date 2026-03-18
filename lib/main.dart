@@ -366,24 +366,65 @@ class _MainShellState extends State<MainShell> {
             fontWeight: FontWeight.w700, fontSize: 11),
           type: BottomNavigationBarType.fixed,
           elevation: 0,
-          items: const [
-            BottomNavigationBarItem(
+          items: [
+            const BottomNavigationBarItem(
               icon: Icon(Icons.explore_outlined),
               activeIcon: Icon(Icons.explore),
               label: 'Discover'),
             BottomNavigationBarItem(
-              icon: Icon(Icons.cell_tower_outlined),
-              activeIcon: Icon(Icons.cell_tower),
+              icon: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseService.getLiveMeetings(),
+                builder: (ctx, snap) {
+                  final isLive = snap.hasData &&
+                    snap.data!.docs.isNotEmpty;
+                  return Stack(
+                    children: [
+                      const Icon(Icons.cell_tower_outlined),
+                      if (isLive) Positioned(
+                        right: 0, top: 0,
+                        child: Container(
+                          width: 8, height: 8,
+                          decoration: const BoxDecoration(
+                            color: kRed,
+                            shape: BoxShape.circle))),
+                    ],
+                  );
+                },
+              ),
+              activeIcon: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseService.getLiveMeetings(),
+                builder: (ctx, snap) {
+                  final isLive = snap.hasData &&
+                    snap.data!.docs.isNotEmpty;
+                  return Stack(
+                    children: [
+                      const Icon(Icons.cell_tower),
+                      if (isLive) Positioned(
+                        right: 0, top: 0,
+                        child: Container(
+                          width: 8, height: 8,
+                          decoration: const BoxDecoration(
+                            color: kRed,
+                            shape: BoxShape.circle))),
+                    ],
+                  );
+                },
+              ),
               label: 'Sanctuary'),
-            BottomNavigationBarItem(
+            const BottomNavigationBarItem(
               icon: Icon(Icons.people_outline),
               activeIcon: Icon(Icons.people),
               label: 'Members'),
             BottomNavigationBarItem(
-              icon: Icon(Icons.chat_bubble_outline),
-              activeIcon: Icon(Icons.chat_bubble),
+              icon: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseService.getMessages(),
+                builder: (ctx, snap) {
+                  return const Icon(Icons.chat_bubble_outline);
+                },
+              ),
+              activeIcon: const Icon(Icons.chat_bubble),
               label: 'Chat'),
-            BottomNavigationBarItem(
+            const BottomNavigationBarItem(
               icon: Icon(Icons.person_outline),
               activeIcon: Icon(Icons.person),
               label: 'Profile'),
@@ -1118,23 +1159,43 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
           Text('Started by ${data['starterName'] ?? 'Member'}',
             style: TextStyle(color: kWhite.withOpacity(0.8), fontSize: 13)),
           const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => _showRoleDialog(
-                isStarting: false, roomCode: data['roomCode']),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: kWhite,
-                foregroundColor: kGold,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
-                elevation: 0),
-              child: const Text('Join Live Service',
-                style: TextStyle(fontSize: 16,
-                  fontWeight: FontWeight.w800)),
+          Row(children: [
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () => _showRoleDialog(
+                  isStarting: false, roomCode: data['roomCode']),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kWhite,
+                  foregroundColor: kGold,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
+                  elevation: 0),
+                child: const Text('Join Live Service',
+                  style: TextStyle(fontSize: 16,
+                    fontWeight: FontWeight.w800)),
+              ),
             ),
-          ),
+            if (data['starterUid'] == _user?.uid) ...[
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: () async {
+                  await _endMeetingAndRecord(data['roomCode']);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kRed,
+                  foregroundColor: kWhite,
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 14, horizontal: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
+                  elevation: 0),
+                child: const Text('End',
+                  style: TextStyle(fontSize: 14,
+                    fontWeight: FontWeight.w800)),
+              ),
+            ],
+          ]),
         ],
       ),
     );
@@ -1267,10 +1328,19 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
                               color: kTextLight.withOpacity(0.7))),
                         ],
                       )),
-                      GestureDetector(
-                        onTap: () => _shareLink(roomCode),
-                        child: const Icon(Icons.share,
-                          color: kGold, size: 18)),
+                      Row(children: [
+                        GestureDetector(
+                          onTap: () => _shareLink(roomCode),
+                          child: const Icon(Icons.share,
+                            color: kGold, size: 18)),
+                        const SizedBox(width: 12),
+                        GestureDetector(
+                          onTap: () async {
+                            await FirebaseService.deleteMeeting(doc.id);
+                          },
+                          child: const Icon(Icons.delete_outline,
+                            color: kRed, size: 18)),
+                      ]),
                     ]));
                 }).toList(),
               );
@@ -1541,6 +1611,12 @@ class _MembersScreenState extends State<MembersScreen> {
                     Text(bio, style: TextStyle(fontSize: 12,
                       color: kTextLight.withOpacity(0.7)),
                       maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ],
+                  if ((data['phone'] ?? '').isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text('📞 ${data['phone']}',
+                      style: TextStyle(fontSize: 11,
+                        color: kGold.withOpacity(0.8))),
                   ],
                 ],
               ),
@@ -2063,6 +2139,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Text(_user?.email ?? '',
                     style: TextStyle(fontSize: 13,
                       color: kTextLight.withOpacity(0.6))),
+                  const SizedBox(height: 4),
+                  if (data?['phone'] != null && data!['phone'].isNotEmpty)
+                    Text('📞 ${data!['phone']}',
+                      style: TextStyle(fontSize: 13,
+                        color: kTextLight.withOpacity(0.7))),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -2127,6 +2208,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ? kTextLight.withOpacity(0.4)
                                   : kText.withOpacity(0.8),
                                 height: 1.5)),
+                        const SizedBox(height: 10),
+                        TextField(
+                          onChanged: (v) {},
+                          decoration: InputDecoration(
+                            hintText: 'Phone number (optional)',
+                            prefixText: '+',
+                            prefixIcon: const Icon(
+                              Icons.phone, color: kGold, size: 18),
+                            filled: true, fillColor: kMilk,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color: kGold.withOpacity(0.3))),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color: kGold.withOpacity(0.3))),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: kGold, width: 2)),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10)),
+                          onSubmitted: (v) async {
+                            if (v.trim().isNotEmpty) {
+                              await FirebaseService.updatePhone(v.trim());
+                            }
+                          },
+                          controller: TextEditingController(
+                            text: data?['phone'] ?? ''),
+                        ),
                         if (_editingBio) ...[
                           const SizedBox(height: 12),
                           SizedBox(
