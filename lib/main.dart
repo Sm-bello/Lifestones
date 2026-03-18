@@ -1801,7 +1801,7 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
           ]),
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildEmptySanctuary() {
