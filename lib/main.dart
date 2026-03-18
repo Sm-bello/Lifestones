@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'dart:io';
 import 'notification_service.dart';
+import 'firebase_options.dart';
 import 'firebase_service.dart';
 
 const kMilk      = Color(0xFFFDF6E3);
@@ -56,7 +57,7 @@ Future<void> signOut() async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await NotificationService.init();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
