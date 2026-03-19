@@ -669,7 +669,8 @@ class _MainShellState extends State<MainShell> {
     ProfileScreen(),
   ];
 
-  Widget _buildResourcesFAB(BuildContext context) {
+  Widget? _buildResourcesFAB(BuildContext context) {
+    if (_tab != 0) return null;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -2538,7 +2539,92 @@ class _MembersScreenState extends State<MembersScreen> {
                     itemCount: members.length,
                     itemBuilder: (_, i) {
                       final data = members[i].data() as Map<String, dynamic>;
-                      return _buildMemberCard(data);
+                      final uid = members[i].id;
+                      final isCurrentUser = uid == FirebaseAuth.instance.currentUser?.uid;
+                      return StreamBuilder<DocumentSnapshot>(
+                        stream: FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(FirebaseAuth.instance.currentUser?.uid)
+                          .snapshots(),
+                        builder: (ctx, pastorSnap) {
+                          final pastorData = pastorSnap.data?.data()
+                            as Map<String, dynamic>?;
+                          final isPastor = pastorData?['role'] == 'pastor';
+                          if (isPastor && !isCurrentUser) {
+                            return Dismissible(
+                              key: Key(uid),
+                              direction: DismissDirection.endToStart,
+                              background: Container(
+                                alignment: Alignment.centerRight,
+                                padding: const EdgeInsets.only(right: 20),
+                                margin: const EdgeInsets.only(bottom: 12),
+                                decoration: BoxDecoration(
+                                  color: kRed.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(20)),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.person_remove,
+                                      color: kRed, size: 28),
+                                    const SizedBox(height: 4),
+                                    const Text('Remove',
+                                      style: TextStyle(
+                                        color: kRed, fontSize: 11,
+                                        fontWeight: FontWeight.w700)),
+                                  ],
+                                ),
+                              ),
+                              confirmDismiss: (_) async {
+                                return await showDialog<bool>(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    backgroundColor: kWhite,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20)),
+                                    title: Text('Remove \${data["displayName"] ?? "Member"}?',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        color: kText)),
+                                    content: const Text(
+                                      'This will sign them out and remove their access. They can rejoin by logging in again.',
+                                      style: TextStyle(fontSize: 13)),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(ctx, false),
+                                        child: const Text('Cancel')),
+                                      ElevatedButton(
+                                        onPressed: () => Navigator.pop(ctx, true),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: kRed,
+                                          foregroundColor: kWhite,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(10))),
+                                        child: const Text('Remove')),
+                                    ],
+                                  ),
+                                ) ?? false;
+                              },
+                              onDismissed: (_) async {
+                                // Remove roleSetAt so they must re-select role
+                                await FirebaseFirestore.instance
+                                  .collection('users').doc(uid).update({
+                                    'roleSetAt': FieldValue.delete(),
+                                    'chatApproved': false,
+                                    'banned': true,
+                                  });
+                                if (ctx.mounted) {
+                                  ScaffoldMessenger.of(ctx).showSnackBar(
+                                    SnackBar(
+                                      content: Text('\${data["displayName"] ?? "Member"} removed'),
+                                      backgroundColor: kRed));
+                                }
+                              },
+                              child: _buildMemberCard(data),
+                            );
+                          }
+                          return _buildMemberCard(data);
+                        },
+                      );
                     },
                   );
                 },
@@ -2704,6 +2790,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
   final _msgCtrl = TextEditingController();
   final _scrollCtrl = ScrollController();
   bool _isTyping = false;
+  Map<String, dynamic>? _replyTo;
 
   void _onTypingChanged(String val) {
     final typing = val.isNotEmpty;
@@ -2760,11 +2847,14 @@ class _MessagesScreenState extends State<MessagesScreen> {
       .doc(_user?.uid)
       .set({'isTyping': false, 'name': _user?.displayName ?? 'Member',
             'updatedAt': FieldValue.serverTimestamp()});
+    final reply = _replyTo;
+    setState(() => _replyTo = null);
     await FirebaseService.sendMessage(
       text: text,
       senderName: _user?.displayName ?? 'Member',
       senderUid: _user?.uid ?? '',
       senderPhoto: _user?.photoURL ?? '',
+      replyTo: reply,
     );
     // Notify all other users via stored FCM tokens
     try {
@@ -3039,6 +3129,24 @@ class _MessagesScreenState extends State<MessagesScreen> {
                     if (!isMe)
                       Text(name, style: TextStyle(fontSize: 11,
                         color: kGoldDark, fontWeight: FontWeight.w700)),
+                    if (data['replyTo'] != null) Container(
+                      margin: const EdgeInsets.only(bottom: 4),
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: isMe
+                          ? kWhite.withOpacity(0.15)
+                          : kGold.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border(left: BorderSide(
+                          color: isMe ? kWhite : kGold, width: 2))),
+                      child: Text(
+                        data['replyTo']['text']?.toString().length ?? 0 > 40
+                          ? data['replyTo']['text'].toString().substring(0, 40) + '...'
+                          : data['replyTo']['text']?.toString() ?? '',
+                        style: TextStyle(fontSize: 11,
+                          color: isMe
+                            ? kWhite.withOpacity(0.8)
+                            : kTextLight.withOpacity(0.7)))),
                     Text(text, style: TextStyle(
                       color: isMe ? kWhite : kText,
                       fontSize: 14, height: 1.4)),
@@ -3237,7 +3345,36 @@ class _MessagesScreenState extends State<MessagesScreen> {
   }
 
   Widget _buildInputBar() {
-    return Container(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (_replyTo != null) Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          color: kGold.withOpacity(0.08),
+          child: Row(children: [
+            Container(
+              width: 3, height: 36,
+              color: kGold,
+              margin: const EdgeInsets.only(right: 8)),
+            Expanded(child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Replying to ${_replyTo!["senderName"] ?? "Member"}',
+                  style: const TextStyle(
+                    fontSize: 11, color: kGoldDark,
+                    fontWeight: FontWeight.w700)),
+                Text(
+                  (_replyTo!["text"] ?? "").toString().length > 40
+                    ? (_replyTo!["text"] ?? "").toString().substring(0, 40) + "..."
+                    : (_replyTo!["text"] ?? "").toString(),
+                  style: TextStyle(fontSize: 12,
+                    color: kTextLight.withOpacity(0.7))),
+              ])),
+            GestureDetector(
+              onTap: () => setState(() => _replyTo = null),
+              child: const Icon(Icons.close, size: 18, color: kGoldDark)),
+          ])),
+        Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       decoration: BoxDecoration(
         color: kWhite,
@@ -3282,6 +3419,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
               child: const Icon(Icons.send, color: kWhite, size: 20))),
         ],
       ),
+      ),
+      ],
     );
   }
 }
@@ -4572,7 +4711,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       fontWeight: FontWeight.w700,
                                       color: kText)),
                                   Text(count > 0
-                                    ? '\$count member\${count > 1 ? "s" : ""} awaiting approval'
+                                    ? '\$count awaiting approval'
                                     : 'No pending requests',
                                     style: TextStyle(fontSize: 12,
                                       color: count > 0

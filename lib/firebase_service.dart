@@ -158,6 +158,7 @@ class FirebaseService {
     required String senderName,
     required String senderUid,
     required String senderPhoto,
+    Map<String, dynamic>? replyTo,
   }) async {
     final isScripture = _detectScripture(text);
     final isHymn = text.startsWith('🎵') || text.toLowerCase().startsWith('hymn');
@@ -167,6 +168,7 @@ class FirebaseService {
       'senderUid': senderUid,
       'senderPhoto': senderPhoto,
       'sentAt': FieldValue.serverTimestamp(),
+      'replyTo': replyTo,
       'type': isScripture ? 'scripture' : isHymn ? 'hymn' : 'text',
     });
   }
