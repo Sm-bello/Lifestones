@@ -222,7 +222,7 @@ class _LoginScreenState extends State<LoginScreen>
 
   Future<void> _handleSignIn() async {
     setState(() { _loading = true; _error = ''; });
-    final user = await signInWithGoogle();
+    final user = await signInWithGoogle(context: context);
     if (!mounted) return;
     if (user == null) {
       setState(() {
@@ -230,6 +230,8 @@ class _LoginScreenState extends State<LoginScreen>
         _loading = false;
       });
     }
+    // If we get here with a user, StreamBuilder handles navigation
+    if (mounted) setState(() => _loading = false);
   }
 
   @override
@@ -348,22 +350,18 @@ class _LoginScreenState extends State<LoginScreen>
                               ? const SizedBox(height: 22, width: 22,
                                   child: CircularProgressIndicator(
                                     color: kWhite, strokeWidth: 2.5))
-                              : Row(
+                              : const Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Container(
-                                      width: 24, height: 24,
-                                      decoration: BoxDecoration(
-                                        color: kWhite,
-                                        borderRadius: BorderRadius.circular(4)),
-                                      child: const Center(child: Text('G',
-                                        style: TextStyle(color: kGold,
-                                          fontWeight: FontWeight.w900,
-                                          fontSize: 14)))),
-                                    const SizedBox(width: 12),
-                                    const Text('Continue with Google',
+                                    Text('G', style: TextStyle(
+                                      color: kWhite,
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 20)),
+                                    SizedBox(width: 12),
+                                    Text('Continue with Google',
                                       style: TextStyle(fontSize: 16,
-                                        fontWeight: FontWeight.w700)),
+                                        fontWeight: FontWeight.w700,
+                                        color: kWhite)),
                                   ],
                                 ),
                           ),
