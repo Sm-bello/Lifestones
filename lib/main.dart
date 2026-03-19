@@ -39,7 +39,7 @@ const kCard      = Color(0xFFFFFFFF);
 final _googleSignIn = GoogleSignIn(scopes: ['email']);
 final _auth = FirebaseAuth.instance;
 
-Future<User?> signInWithGoogle() async {
+Future<User?> signInWithGoogle({BuildContext? context}) async {
   try {
     final googleUser = await _googleSignIn.signIn();
     if (googleUser == null) return null;
