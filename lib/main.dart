@@ -60,6 +60,20 @@ Future<User?> signInWithGoogle({BuildContext? context}) async {
           .update({'fcmToken': token});
       }
     } catch (e) { debugPrint('FCM token error: \$e'); }
+    // Immediately check role for new users
+    if (result.user != null && context != null && context.mounted) {
+      try {
+        final userDoc = await FirebaseFirestore.instance
+          .collection('users').doc(result.user!.uid).get();
+        final data = userDoc.data();
+        if (data?['roleSetAt'] == null) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => const RoleSelectionScreen()));
+          return result.user;
+        }
+      } catch (e) { debugPrint('Role check: \$e'); }
+    }
     return result.user;
   } catch (e) {
     debugPrint('Sign-in error: $e');
@@ -599,6 +613,7 @@ class _MainShellState extends State<MainShell> {
     MeetingsScreen(),
     MembersScreen(),
     MessagesScreen(),
+    AttendanceScreen(),
     PrayerScreen(),
     ProfileScreen(),
   ];
@@ -684,6 +699,10 @@ class _MainShellState extends State<MainShell> {
               ),
               activeIcon: const Icon(Icons.chat_bubble),
               label: 'Chat'),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.bar_chart_outlined),
+              activeIcon: Icon(Icons.bar_chart),
+              label: 'Attendance'),
             const BottomNavigationBarItem(
               icon: Icon(Icons.volunteer_activism_outlined),
               activeIcon: Icon(Icons.volunteer_activism),
@@ -783,6 +802,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                     const SizedBox(height: 20),
                     _buildMeetingsLayer(),
                     const SizedBox(height: 20),
+                    _buildBiblePlanLayer(),
+                    const SizedBox(height: 20),
                     _buildAudioLayer(),
                     const SizedBox(height: 32),
                   ],
@@ -874,7 +895,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         GestureDetector(
           onTap: () {
             final shell = context.findAncestorStateOfType<_MainShellState>();
-            shell?.setState(() => shell._tab = 5);
+            shell?.setState(() => shell._tab = 6);
           },
           child: Container(
             width: 38, height: 38,
@@ -997,13 +1018,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           StreamBuilder<QuerySnapshot>(
             stream: FirebaseService.getUpcomingMeetings(),
             builder: (ctx, snap) {
-              final validDocs = snap.hasData
-                ? snap.data!.docs.where((d) {
-                    final data = d.data() as Map<String, dynamic>;
-                    return (data['downloadUrl'] ?? '').toString().isNotEmpty;
-                  }).toList()
-                : [];
-              if (!snap.hasData || validDocs.isEmpty) {
+              if (!snap.hasData) {
                 return Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -1253,6 +1268,108 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     }
   }
 
+
+  Widget _buildBiblePlanLayer() {
+    final plans = [
+      {'day': 'Day 1', 'book': 'Genesis 1-2', 'theme': 'Creation'},
+      {'day': 'Day 2', 'book': 'Genesis 3-4', 'theme': 'The Fall'},
+      {'day': 'Day 3', 'book': 'Psalm 1', 'theme': 'The Blessed Man'},
+      {'day': 'Day 4', 'book': 'Proverbs 1', 'theme': 'Wisdom'},
+      {'day': 'Day 5', 'book': 'Matthew 1-2', 'theme': 'Birth of Jesus'},
+      {'day': 'Day 6', 'book': 'John 1', 'theme': 'The Word'},
+      {'day': 'Day 7', 'book': 'Romans 8', 'theme': 'Life in the Spirit'},
+    ];
+    final today = DateTime.now().weekday - 1;
+    final todayPlan = plans[today % plans.length];
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: kWhite,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: kGold.withOpacity(0.15)),
+        boxShadow: [BoxShadow(
+          color: kGoldNeon.withOpacity(0.12),
+          blurRadius: 16, spreadRadius: 2,
+          offset: const Offset(0, 4))]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            const Text('📖 Bible Reading Plan',
+              style: TextStyle(fontSize: 16,
+                fontWeight: FontWeight.w800, color: kText)),
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: kGold.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10)),
+              child: const Text('Today',
+                style: TextStyle(fontSize: 10,
+                  color: kGoldDark,
+                  fontWeight: FontWeight.w700))),
+          ]),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [kGold.withOpacity(0.08),
+                  kGold.withOpacity(0.03)]),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: kGold.withOpacity(0.2))),
+            child: Row(children: [
+              Container(
+                width: 48, height: 48,
+                decoration: BoxDecoration(
+                  color: kGold,
+                  borderRadius: BorderRadius.circular(24)),
+                child: const Icon(Icons.menu_book,
+                  color: kWhite, size: 24)),
+              const SizedBox(width: 12),
+              Expanded(child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(todayPlan['day']!,
+                    style: TextStyle(fontSize: 11,
+                      color: kGoldDark,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1)),
+                  const SizedBox(height: 2),
+                  Text(todayPlan['book']!,
+                    style: const TextStyle(fontSize: 16,
+                      fontWeight: FontWeight.w800, color: kText)),
+                  Text(todayPlan['theme']!,
+                    style: TextStyle(fontSize: 12,
+                      color: kTextLight.withOpacity(0.7))),
+                ],
+              )),
+            ]),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: plans.asMap().entries.map((e) {
+              final isToday = e.key == today % plans.length;
+              return Expanded(
+                child: Container(
+                  height: 4,
+                  margin: const EdgeInsets.symmetric(horizontal: 1),
+                  decoration: BoxDecoration(
+                    color: isToday ? kGold : kGold.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(2))));
+            }).toList(),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '${today % plans.length + 1} of ${plans.length} days this week',
+            style: TextStyle(fontSize: 11,
+              color: kTextLight.withOpacity(0.5))),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAudioLayer() {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -1307,9 +1424,43 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                   ]),
                 );
               }
+              final validDocs = snap.data!.docs.where((d) {
+                    final data = d.data() as Map<String, dynamic>;
+                    return (data['downloadUrl'] ?? '').toString().isNotEmpty;
+                  }).toList();
+              if (validDocs.isEmpty) {
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: kMilk,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: kGold.withOpacity(0.1))),
+                  child: Row(children: [
+                    Container(
+                      width: 44, height: 44,
+                      decoration: BoxDecoration(
+                        color: kGold,
+                        borderRadius: BorderRadius.circular(22)),
+                      child: const Icon(Icons.mic,
+                        color: kWhite, size: 22)),
+                    const SizedBox(width: 12),
+                    Expanded(child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('No recordings yet',
+                          style: TextStyle(fontSize: 13,
+                            fontWeight: FontWeight.w700, color: kText)),
+                        Text('Past classes will appear here',
+                          style: TextStyle(fontSize: 11,
+                            color: kTextLight.withOpacity(0.6))),
+                      ],
+                    )),
+                  ]),
+                );
+              }
               return Column(
                 children: validDocs.map((doc) {
-                  final data = (doc as dynamic).data() as Map<String, dynamic>;
+                  final data = doc.data() as Map<String, dynamic>;
                   final ts = data['endedAt'] as Timestamp?;
                   final date = ts != null
                     ? DateFormat('EEE, MMM d · h:mm a').format(ts.toDate())
@@ -1695,6 +1846,24 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
     }
     try {
       final jitsi = JitsiMeet();
+      // Track attendance
+      try {
+        final meetDoc = await FirebaseFirestore.instance
+          .collection('meetings').doc('current_live').get();
+        final meetData = meetDoc.data();
+        if (meetData != null) {
+          await FirebaseFirestore.instance
+            .collection('attendance').add({
+              'uid': _user?.uid,
+              'name': _user?.displayName ?? 'Member',
+              'roomCode': meetData['roomCode'] ?? roomCode,
+              'topic': meetData['topic'] ?? 'Lifestones Class',
+              'joinedAt': FieldValue.serverTimestamp(),
+              'role': role,
+            });
+        }
+      } catch (e) { debugPrint('Attendance error: \$e'); }
+
       await jitsi.join(JitsiMeetConferenceOptions(
         serverURL: "https://meet.ffmuc.net",
         room: 'Lifestones-$roomCode',
@@ -3009,6 +3178,199 @@ class _MessagesScreenState extends State<MessagesScreen> {
                   blurRadius: 8, spreadRadius: 1)]),
               child: const Icon(Icons.send, color: kWhite, size: 20))),
         ],
+      ),
+    );
+  }
+}
+
+
+// ══════════════════════════════════════════════
+//  ATTENDANCE SCREEN
+// ══════════════════════════════════════════════
+class AttendanceScreen extends StatefulWidget {
+  const AttendanceScreen({super.key});
+  @override
+  State<AttendanceScreen> createState() => _AttendanceScreenState();
+}
+
+class _AttendanceScreenState extends State<AttendanceScreen> {
+  final User? _user = FirebaseAuth.instance.currentUser;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: kMilkDeep,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+              child: Row(children: [
+                const Text('Attendance',
+                  style: TextStyle(fontSize: 24,
+                    fontWeight: FontWeight.w800, color: kText)),
+                const Spacer(),
+                StreamBuilder<DocumentSnapshot>(
+                  stream: FirebaseFirestore.instance
+                    .collection('users').doc(_user?.uid).snapshots(),
+                  builder: (ctx, snap) {
+                    final data = snap.data?.data()
+                      as Map<String, dynamic>?;
+                    if (data?['role'] != 'pastor') return const SizedBox();
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: kGold.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20)),
+                      child: const Text('Pastor View',
+                        style: TextStyle(fontSize: 11,
+                          color: kGoldDark,
+                          fontWeight: FontWeight.w600)));
+                  },
+                ),
+              ]),
+            ),
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                  .collection('attendance')
+                  .orderBy('joinedAt', descending: true)
+                  .limit(50)
+                  .snapshots(),
+                builder: (ctx, snap) {
+                  if (!snap.hasData || snap.data!.docs.isEmpty) {
+                    return Center(child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text('📊',
+                          style: TextStyle(fontSize: 48)),
+                        const SizedBox(height: 12),
+                        Text('No attendance records yet.',
+                          style: TextStyle(fontSize: 15,
+                            color: kTextLight.withOpacity(0.6))),
+                        const SizedBox(height: 4),
+                        Text('Records appear after classes.',
+                          style: TextStyle(fontSize: 13,
+                            color: kTextLight.withOpacity(0.4))),
+                      ],
+                    ));
+                  }
+                  final Map<String, List<Map<String, dynamic>>> grouped = {};
+                  for (final doc in snap.data!.docs) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    final room = data['roomCode'] ?? 'Unknown';
+                    grouped.putIfAbsent(room, () => []).add(data);
+                  }
+                  return ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: grouped.keys.length,
+                    itemBuilder: (_, i) {
+                      final roomCode = grouped.keys.elementAt(i);
+                      final attendees = grouped[roomCode]!;
+                      final first = attendees.first;
+                      final ts = first['joinedAt'] as Timestamp?;
+                      final date = ts != null
+                        ? DateFormat('EEE, MMM d · h:mm a').format(ts.toDate())
+                        : '';
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: kWhite,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: kGold.withOpacity(0.12)),
+                          boxShadow: [BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2))]),
+                        child: Column(children: [
+                          Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Row(children: [
+                              Container(
+                                width: 44, height: 44,
+                                decoration: BoxDecoration(
+                                  color: kGold.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(22)),
+                                child: const Icon(Icons.groups,
+                                  color: kGold, size: 22)),
+                              const SizedBox(width: 12),
+                              Expanded(child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(first['topic'] ?? 'Lifestones Class',
+                                    style: const TextStyle(fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: kText)),
+                                  Text(date,
+                                    style: TextStyle(fontSize: 11,
+                                      color: kTextLight.withOpacity(0.6))),
+                                ],
+                              )),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: kGold.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(20)),
+                                child: Text(
+                                  '${attendees.length} joined',
+                                  style: const TextStyle(fontSize: 11,
+                                    color: kGoldDark,
+                                    fontWeight: FontWeight.w700))),
+                            ]),
+                          ),
+                          const Divider(height: 1,
+                            color: Color(0xFFEEE8D5)),
+                          Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Wrap(
+                              spacing: 6, runSpacing: 6,
+                              children: attendees.map((a) {
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: kMilk,
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: kGold.withOpacity(0.2))),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        width: 20, height: 20,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: kGold.withOpacity(0.2)),
+                                        child: Center(child: Text(
+                                          (a['name'] ?? 'M')[0].toUpperCase(),
+                                          style: const TextStyle(
+                                            fontSize: 10,
+                                            color: kGoldDark,
+                                            fontWeight: FontWeight.w700)))),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        (a['name'] ?? 'Member').split(' ').first,
+                                        style: const TextStyle(
+                                          fontSize: 11, color: kText)),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ]),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
