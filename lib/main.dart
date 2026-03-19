@@ -3140,9 +3140,10 @@ class _MessagesScreenState extends State<MessagesScreen> {
                         border: Border(left: BorderSide(
                           color: isMe ? kWhite : kGold, width: 2))),
                       child: Text(
-                        data['replyTo']['text']?.toString().length ?? 0 > 40
-                          ? data['replyTo']['text'].toString().substring(0, 40) + '...'
-                          : data['replyTo']['text']?.toString() ?? '',
+                        () {
+                          final t = data['replyTo']['text']?.toString() ?? '';
+                          return t.length > 40 ? t.substring(0, 40) + '...' : t;
+                        }(),
                         style: TextStyle(fontSize: 11,
                           color: isMe
                             ? kWhite.withOpacity(0.8)
