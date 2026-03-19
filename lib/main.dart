@@ -411,7 +411,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   Future<void> _selectRole(String role) async {
     if (role == 'pastor') {
       final pin = await _showPinDialog();
-      if (pin == null || pin != '7749') {
+      // PIN is checked inside _showPinDialog against Firebase
+    if (pin == null || pin.isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('❌ Wrong PIN. Try again.'),
@@ -442,6 +443,21 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   }
 
   Future<String?> _showPinDialog() async {
+    // Fetch PIN from Firebase - not hardcoded
+    String correctPin = '7749';
+    try {
+      final doc = await FirebaseFirestore.instance
+        .collection('app_config').doc('security').get();
+      if (doc.exists && doc.data()?['pastor_pin'] != null) {
+        correctPin = doc.data()!['pastor_pin'];
+      } else {
+        // First time - create it in Firebase
+        await FirebaseFirestore.instance
+          .collection('app_config').doc('security')
+          .set({'pastor_pin': '7749'}, SetOptions(merge: true));
+      }
+    } catch (e) { debugPrint('PIN fetch: \$e'); }
+
     final ctrl = TextEditingController();
     return showDialog<String>(
       context: context,
@@ -613,7 +629,6 @@ class _MainShellState extends State<MainShell> {
     MeetingsScreen(),
     MembersScreen(),
     MessagesScreen(),
-    AttendanceScreen(),
     PrayerScreen(),
     ProfileScreen(),
   ];
@@ -699,10 +714,6 @@ class _MainShellState extends State<MainShell> {
               ),
               activeIcon: const Icon(Icons.chat_bubble),
               label: 'Chat'),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.bar_chart_outlined),
-              activeIcon: Icon(Icons.bar_chart),
-              label: 'Attendance'),
             const BottomNavigationBarItem(
               icon: Icon(Icons.volunteer_activism_outlined),
               activeIcon: Icon(Icons.volunteer_activism),
@@ -895,7 +906,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         GestureDetector(
           onTap: () {
             final shell = context.findAncestorStateOfType<_MainShellState>();
-            shell?.setState(() => shell._tab = 6);
+            shell?.setState(() => shell._tab = 5);
           },
           child: Container(
             width: 38, height: 38,
@@ -1715,8 +1726,12 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
                               style: TextStyle(
                                 color: kTextLight.withOpacity(0.6)))),
                           ElevatedButton(
-                            onPressed: () {
-                              if (pinCtrl.text == '7749') {
+                            onPressed: () async {
+                              final doc = await FirebaseFirestore.instance
+                                .collection('app_config')
+                                .doc('security').get();
+                              final pin = doc.data()?['pastor_pin'] ?? '7749';
+                              if (pinCtrl.text == pin) {
                                 Navigator.pop(ctx, true);
                               } else {
                                 ScaffoldMessenger.of(ctx).showSnackBar(
@@ -3956,6 +3971,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
+                  // Attendance tile for pastor
+                  if (role == 'pastor')
+                    GestureDetector(
+                      onTap: () => Navigator.push(context,
+                        MaterialPageRoute(
+                          builder: (_) => const AttendanceScreen())),
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: kWhite,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: kGold.withOpacity(0.12))),
+                        child: Row(children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: kGold.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(10)),
+                            child: const Icon(Icons.bar_chart,
+                              color: kGold, size: 18)),
+                          const SizedBox(width: 12),
+                          const Expanded(child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Attendance Records',
+                                style: TextStyle(fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: kText)),
+                              Text('See who joined each class',
+                                style: TextStyle(fontSize: 12,
+                                  color: kTextLight)),
+                            ],
+                          )),
+                          Icon(Icons.chevron_right,
+                            color: kGold.withOpacity(0.4), size: 20),
+                        ]),
+                      ),
+                    ),
                   if (role == 'pastor')
                     StreamBuilder<QuerySnapshot>(
                       stream: FirebaseFirestore.instance
