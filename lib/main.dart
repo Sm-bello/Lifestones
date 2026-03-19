@@ -1940,7 +1940,7 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
     // Stop recording and upload to Firebase Storage
     try {
       if (_isRecording) {
-        final path = await _recorder.stopRecorder();
+        final path = await _recorder!.stopRecorder();
         setState(() => _isRecording = false);
         if (path != null && path.isNotEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -2213,7 +2213,7 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
                         style: TextStyle(color: kWhite,
                           fontWeight: FontWeight.w800, fontSize: 12)),
                       Text('saves recording',
-                        style: TextStyle(color: kWhite70, fontSize: 9)),
+                        style: TextStyle(color: Colors.white70, fontSize: 9)),
                     ]),
               ),
             ],
