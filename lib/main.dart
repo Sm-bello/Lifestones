@@ -3471,6 +3471,44 @@ class _BibleScreenState extends State<BibleScreen> {
 
   List<String> get _displayBooks => _books.map((b) => b.replaceAll('+', ' ')).toList();
 
+  Widget _buildVerseDisplay(String text) {
+    // Split by verse numbers pattern and display each verse
+    final lines = text.split('\n');
+    final widgets = <Widget>[];
+    int verseNum = 0;
+    for (final line in lines) {
+      final trimmed = line.trim();
+      if (trimmed.isEmpty) {
+        widgets.add(const SizedBox(height: 8));
+        continue;
+      }
+      verseNum++;
+      widgets.add(Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 28,
+              child: Text('$verseNum',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: kGold,
+                  fontWeight: FontWeight.w800,
+                  height: 1.8))),
+            Expanded(
+              child: Text(trimmed,
+                style: const TextStyle(
+                  fontSize: 17, height: 1.7, color: kText))),
+          ],
+        ),
+      ));
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: widgets);
+  }
+
   int _chapterCount(String book) {
     const counts = {
       'Genesis': 50, 'Exodus': 40, 'Leviticus': 27, 'Numbers': 36,
