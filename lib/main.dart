@@ -1940,7 +1940,7 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
     // Stop recording and upload to Firebase Storage
     try {
       if (_isRecording) {
-        final path = await _recorder.stop();
+        final path = await _recorder.stopRecorder();
         setState(() => _isRecording = false);
         if (path != null && path.isNotEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -1950,7 +1950,7 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
           await FirebaseService.saveRecording(
             localPath: path,
             roomCode: roomCode,
-            topic: _currentTopic ?? 'Lifestones Class',
+            topic: 'Lifestones Class',
             starterUid: user?.uid ?? '',
             starterName: user?.displayName ?? 'Pastor',
           );
@@ -2206,7 +2206,7 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14)),
                   elevation: 0),
-                child: const Column(
+                child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text('End Class',
