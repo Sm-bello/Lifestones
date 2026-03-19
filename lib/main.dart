@@ -12,6 +12,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:jitsi_meet_flutter_sdk/jitsi_meet_flutter_sdk.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'dart:io';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -663,6 +666,8 @@ class _MainShellState extends State<MainShell> {
     MeetingsScreen(),
     MembersScreen(),
     MessagesScreen(),
+    BibleScreen(),
+    HymnScreen(),
     PrayerScreen(),
     ProfileScreen(),
   ];
@@ -748,6 +753,14 @@ class _MainShellState extends State<MainShell> {
               ),
               activeIcon: const Icon(Icons.chat_bubble),
               label: 'Chat'),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.menu_book_outlined),
+              activeIcon: Icon(Icons.menu_book),
+              label: 'Bible'),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.music_note_outlined),
+              activeIcon: Icon(Icons.music_note),
+              label: 'Hymns'),
             const BottomNavigationBarItem(
               icon: Icon(Icons.volunteer_activism_outlined),
               activeIcon: Icon(Icons.volunteer_activism),
@@ -940,7 +953,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         GestureDetector(
           onTap: () {
             final shell = context.findAncestorStateOfType<_MainShellState>();
-            shell?.setState(() => shell._tab = 5);
+            shell?.setState(() => shell._tab = 7);
           },
           child: Container(
             width: 38, height: 38,
@@ -3255,6 +3268,414 @@ class _MessagesScreenState extends State<MessagesScreen> {
   }
 }
 
+
+
+// ══════════════════════════════════════════════
+//  BIBLE SCREEN
+// ══════════════════════════════════════════════
+class BibleScreen extends StatefulWidget {
+  const BibleScreen({super.key});
+  @override
+  State<BibleScreen> createState() => _BibleScreenState();
+}
+
+class _BibleScreenState extends State<BibleScreen> {
+  String _selectedVersion = 'kjv';
+  String _selectedBook = 'Genesis';
+  int _selectedChapter = 1;
+  bool _isLoading = false;
+  String _passageText = '';
+  String _errorText = '';
+
+  final List<Map<String,String>> _versions = [
+    {'label': 'KJV', 'value': 'kjv'},
+    {'label': 'Amplified', 'value': 'amp'},
+    {'label': 'NIV', 'value': 'niv'},
+    {'label': 'NLT', 'value': 'nlt'},
+  ];
+
+  final List<String> _books = [
+    'Genesis','Exodus','Leviticus','Numbers','Deuteronomy',
+    'Joshua','Judges','Ruth','1+Samuel','2+Samuel',
+    '1+Kings','2+Kings','1+Chronicles','2+Chronicles','Ezra',
+    'Nehemiah','Esther','Job','Psalms','Proverbs',
+    'Ecclesiastes','Song+of+Solomon','Isaiah','Jeremiah','Lamentations',
+    'Ezekiel','Daniel','Hosea','Joel','Amos',
+    'Obadiah','Jonah','Micah','Nahum','Habakkuk',
+    'Zephaniah','Haggai','Zechariah','Malachi',
+    'Matthew','Mark','Luke','John','Acts',
+    'Romans','1+Corinthians','2+Corinthians','Galatians','Ephesians',
+    'Philippians','Colossians','1+Thessalonians','2+Thessalonians',
+    '1+Timothy','2+Timothy','Titus','Philemon','Hebrews',
+    'James','1+Peter','2+Peter','1+John','2+John',
+    '3+John','Jude','Revelation'
+  ];
+
+  List<String> get _displayBooks => _books.map((b) => b.replaceAll('+', ' ')).toList();
+
+  Future<void> _loadPassage() async {
+    setState(() { _isLoading = true; _passageText = ''; _errorText = ''; });
+    try {
+      final book = _selectedBook.replaceAll(' ', '+');
+      final url = 'https://bible-api.com/$book+$_selectedChapter?translation=$_selectedVersion';
+      final response = await http.get(Uri.parse(url))
+        .timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() => _passageText = data['text'] ?? 'Passage not found');
+      } else {
+        setState(() => _errorText = 'Could not load. Check connection.');
+      }
+    } catch (e) {
+      setState(() => _errorText = 'No internet connection. Check your network.');
+    }
+    setState(() => _isLoading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: kMilkDeep,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+              child: Row(children: [
+                const Text('Holy Bible',
+                  style: TextStyle(fontSize: 26,
+                    fontWeight: FontWeight.w800, color: kText)),
+                const Spacer(),
+                const Text('📖', style: TextStyle(fontSize: 24)),
+              ])),
+            // Version selector
+            SizedBox(
+              height: 38,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: _versions.length,
+                itemBuilder: (_, i) {
+                  final v = _versions[i];
+                  final selected = v['value'] == _selectedVersion;
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedVersion = v['value']!),
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: selected ? kGold : kWhite,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: selected ? kGold : kGold.withOpacity(0.3))),
+                      child: Text(v['label']!,
+                        style: TextStyle(
+                          color: selected ? kWhite : kTextLight,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13))));
+                },
+              ),
+            ),
+            const SizedBox(height: 10),
+            // Book + Chapter + Go
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(children: [
+                Expanded(
+                  flex: 3,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: kWhite,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: kGold.withOpacity(0.3))),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _selectedBook,
+                        isExpanded: true,
+                        style: const TextStyle(
+                          color: kText, fontSize: 13,
+                          fontWeight: FontWeight.w600),
+                        onChanged: (v) => setState(() {
+                          _selectedBook = v!;
+                          _selectedChapter = 1;
+                        }),
+                        items: _displayBooks.map((b) =>
+                          DropdownMenuItem(value: b, child: Text(b))
+                        ).toList())))),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: kWhite,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: kGold.withOpacity(0.3))),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<int>(
+                        value: _selectedChapter,
+                        isExpanded: true,
+                        style: const TextStyle(
+                          color: kText, fontSize: 13,
+                          fontWeight: FontWeight.w600),
+                        onChanged: (v) => setState(() => _selectedChapter = v!),
+                        items: List.generate(150, (i) => i + 1).map((c) =>
+                          DropdownMenuItem(value: c, child: Text('Ch $c'))
+                        ).toList())))),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: _loadPassage,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kGold,
+                    foregroundColor: kWhite,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12))),
+                  child: const Text('Go',
+                    style: TextStyle(fontWeight: FontWeight.w800))),
+              ])),
+            const SizedBox(height: 8),
+            // Passage
+            Expanded(child: _isLoading
+              ? const Center(child: CircularProgressIndicator(color: kGold))
+              : _errorText.isNotEmpty
+                ? Center(child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.wifi_off, color: kGold, size: 48),
+                      const SizedBox(height: 12),
+                      Text(_errorText,
+                        style: TextStyle(fontSize: 14,
+                          color: kTextLight.withOpacity(0.7)),
+                        textAlign: TextAlign.center),
+                    ]))
+                : _passageText.isEmpty
+                  ? Center(child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text('📖', style: TextStyle(fontSize: 56)),
+                        const SizedBox(height: 16),
+                        Text('Select a book and chapter',
+                          style: TextStyle(fontSize: 16,
+                            color: kTextLight.withOpacity(0.6))),
+                        const SizedBox(height: 4),
+                        Text('then tap Go',
+                          style: TextStyle(fontSize: 13,
+                            color: kTextLight.withOpacity(0.4))),
+                      ]))
+                  : SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: kGold.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(10)),
+                            child: Text(
+                              '$_selectedBook $_selectedChapter - ${_versions.firstWhere((v) => v["value"] == _selectedVersion)["label"]}',
+                              style: const TextStyle(
+                                fontSize: 13, fontWeight: FontWeight.w700,
+                                color: kGoldDark))),
+                          const SizedBox(height: 16),
+                          Text(_passageText,
+                            style: const TextStyle(
+                              fontSize: 17, height: 2.0, color: kText)),
+                        ],
+                      ))),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ══════════════════════════════════════════════
+//  HYMN SCREEN
+// ══════════════════════════════════════════════
+class HymnScreen extends StatefulWidget {
+  const HymnScreen({super.key});
+  @override
+  State<HymnScreen> createState() => _HymnScreenState();
+}
+
+class _HymnScreenState extends State<HymnScreen> {
+  List<dynamic> _hymns = [];
+  List<dynamic> _filtered = [];
+  final _searchCtrl = TextEditingController();
+  bool _loaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHymns();
+  }
+
+  Future<void> _loadHymns() async {
+    try {
+      final data = await rootBundle.loadString('assets/hymns.json');
+      final list = json.decode(data) as List;
+      setState(() { _hymns = list; _filtered = list; _loaded = true; });
+    } catch (e) {
+      setState(() => _loaded = true);
+    }
+  }
+
+  void _search(String query) {
+    setState(() {
+      _filtered = query.isEmpty
+        ? _hymns
+        : _hymns.where((h) =>
+            h['title'].toString().toLowerCase().contains(query.toLowerCase()) ||
+            h['lyrics'].toString().toLowerCase().contains(query.toLowerCase())
+          ).toList();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: kMilkDeep,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+              child: Row(children: [
+                const Text('Hymn Book',
+                  style: TextStyle(fontSize: 26,
+                    fontWeight: FontWeight.w800, color: kText)),
+                const Spacer(),
+                const Text('🎵', style: TextStyle(fontSize: 24)),
+              ])),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextField(
+                controller: _searchCtrl,
+                onChanged: _search,
+                decoration: InputDecoration(
+                  hintText: 'Search by title or lyric...',
+                  prefixIcon: const Icon(Icons.search, color: kGold),
+                  filled: true, fillColor: kWhite,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 12)))),
+            const SizedBox(height: 8),
+            if (!_loaded)
+              const Expanded(
+                child: Center(
+                  child: CircularProgressIndicator(color: kGold)))
+            else if (_filtered.isEmpty)
+              Expanded(child: Center(
+                child: Text('No hymns found',
+                  style: TextStyle(
+                    color: kTextLight.withOpacity(0.5)))))
+            else
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: _filtered.length,
+                  itemBuilder: (_, i) {
+                    final hymn = _filtered[i];
+                    return GestureDetector(
+                      onTap: () => _showHymn(hymn),
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: kWhite,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: kGold.withOpacity(0.12)),
+                          boxShadow: [BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 6, offset: const Offset(0, 2))]),
+                        child: Row(children: [
+                          Container(
+                            width: 38, height: 38,
+                            decoration: BoxDecoration(
+                              color: kGold.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(19)),
+                            child: Center(child: Text(
+                              '#${hymn["number"]}',
+                              style: const TextStyle(
+                                fontSize: 11, color: kGoldDark,
+                                fontWeight: FontWeight.w800)))),
+                          const SizedBox(width: 12),
+                          Expanded(child: Text(hymn['title'],
+                            style: const TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.w700,
+                              color: kText))),
+                          Icon(Icons.chevron_right,
+                            color: kGold.withOpacity(0.4)),
+                        ])));
+                  },
+                )),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showHymn(dynamic hymn) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: kWhite,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      builder: (ctx) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.85,
+        maxChildSize: 0.95,
+        builder: (_, ctrl) => Column(children: [
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 40, height: 4,
+            decoration: BoxDecoration(
+              color: kGold.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(2))),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+            child: Row(children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: kGold.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10)),
+                child: Text('#${hymn["number"]}',
+                  style: const TextStyle(
+                    color: kGoldDark, fontWeight: FontWeight.w800))),
+              const SizedBox(width: 10),
+              Expanded(child: Text(hymn['title'],
+                style: const TextStyle(
+                  fontSize: 18, fontWeight: FontWeight.w800,
+                  color: kText))),
+              const Text('🎵'),
+            ])),
+          Expanded(
+            child: SingleChildScrollView(
+              controller: ctrl,
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
+              child: Text(hymn['lyrics'],
+                style: const TextStyle(
+                  fontSize: 17, height: 2.2, color: kText)))),
+        ]),
+      ),
+    );
+  }
+}
 
 // ══════════════════════════════════════════════
 //  ATTENDANCE SCREEN
