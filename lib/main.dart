@@ -89,6 +89,43 @@ void main() async {
   runApp(const LifestonesApp());
 }
 
+void _checkScheduledMeetings() {
+  // Check every minute for upcoming meetings
+  Future.doWhile(() async {
+    await Future.delayed(const Duration(minutes: 1));
+    try {
+      final now = DateTime.now();
+      final soon = now.add(const Duration(minutes: 30));
+      final snap = await FirebaseFirestore.instance
+        .collection('meetings')
+        .where('isLive', isEqualTo: false)
+        .where('scheduledAt', isGreaterThan: Timestamp.fromDate(now))
+        .where('scheduledAt', isLessThan: Timestamp.fromDate(soon))
+        .get();
+      for (final doc in snap.docs) {
+        final data = doc.data();
+        final topic = data['topic'] ?? 'Lifestones Class';
+        final scheduledAt = (data['scheduledAt'] as Timestamp).toDate();
+        final diff = scheduledAt.difference(now).inMinutes;
+        if (diff <= 30 && diff > 28) {
+          // 30 min reminder
+          await NotificationService.showLocalNotification(
+            title: '⛪ Class in 30 minutes!',
+            body: '"\$topic" starts at \${DateFormat("h:mm a").format(scheduledAt)}. Get ready!',
+          );
+        } else if (diff <= 5 && diff > 3) {
+          // 5 min alarm
+          await NotificationService.showLocalNotification(
+            title: '🔔 Class starting NOW!',
+            body: '"\$topic" is about to begin! Tap to join.',
+          );
+        }
+      }
+    } catch (e) { debugPrint('Schedule check error: \$e'); }
+    return true;
+  });
+}
+
 class LifestonesApp extends StatelessWidget {
   const LifestonesApp({super.key});
   @override
@@ -1137,24 +1174,39 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   String _currentUrl = '';
 
   Future<void> _playRecording(String url, BuildContext ctx) async {
-    if (url.isEmpty) return;
+    if (url.isEmpty) {
+      ScaffoldMessenger.of(ctx).showSnackBar(
+        const SnackBar(
+          content: Text('Audio not available yet'),
+          backgroundColor: kRed));
+      return;
+    }
     try {
       if (_isPlaying && _currentUrl == url) {
-        await _audioPlayer.stop();
+        await _audioPlayer.pause();
         setState(() => _isPlaying = false);
         return;
+      }
+      if (_isPlaying) {
+        await _audioPlayer.stop();
       }
       setState(() { _isPlaying = true; _currentUrl = url; });
       await _audioPlayer.setUrl(url);
       await _audioPlayer.play();
       _audioPlayer.playerStateStream.listen((state) {
         if (state.processingState == ProcessingState.completed) {
-          setState(() => _isPlaying = false);
+          if (mounted) setState(() => _isPlaying = false);
         }
       });
     } catch (e) {
       debugPrint('Play error: \$e');
-      setState(() => _isPlaying = false);
+      if (mounted) {
+        setState(() => _isPlaying = false);
+        ScaffoldMessenger.of(ctx).showSnackBar(
+          SnackBar(
+            content: Text('Playback error: \$e'),
+            backgroundColor: kRed));
+      }
     }
   }
 
@@ -1710,6 +1762,37 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
     );
   }
 
+  Widget _buildStartButton() {
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+        .collection('users')
+        .doc(_user?.uid)
+        .snapshots(),
+      builder: (ctx, snap) {
+        final data = snap.data?.data() as Map<String, dynamic>?;
+        final isPastor = data?['role'] == 'pastor';
+        if (!isPastor) return const SizedBox();
+        return SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () => _showRoleDialog(isStarting: true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: kGold,
+              foregroundColor: kWhite,
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16)),
+              elevation: 6,
+              shadowColor: kGoldNeon.withOpacity(0.4)),
+            child: const Text('Start a Class 🔴',
+              style: TextStyle(fontSize: 17,
+                fontWeight: FontWeight.w800)),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildLiveCard(Map<String, dynamic> data) {
     final isLive = data['isLive'] == true;
     if (!isLive) return const SizedBox();
@@ -1816,42 +1899,55 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
   }
 
   Widget _buildEmptySanctuary() {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: kWhite,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: kGold.withOpacity(0.15)),
-        boxShadow: [BoxShadow(
-          color: kGoldNeon.withOpacity(0.1),
-          blurRadius: 16, spreadRadius: 2)]),
-      child: Column(children: [
-        Container(
-          width: 72, height: 72,
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+        .collection('users').doc(_user?.uid).snapshots(),
+      builder: (ctx, snap) {
+        final data = snap.data?.data() as Map<String, dynamic>?;
+        final isPastor = data?['role'] == 'pastor';
+        return Container(
+          padding: const EdgeInsets.all(32),
           decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: kGold.withOpacity(0.1)),
-          child: const Icon(Icons.cell_tower, color: kGold, size: 36)),
-        const SizedBox(height: 16),
-        const Text('The Sanctuary',
-          style: TextStyle(fontSize: 22,
-            fontWeight: FontWeight.w800, color: kText)),
-        const SizedBox(height: 8),
-        Text('No class is live right now.\nStart one or wait for your Pastor.',
-          style: TextStyle(fontSize: 13, height: 1.5,
-            color: kTextLight.withOpacity(0.7)),
-          textAlign: TextAlign.center),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          decoration: BoxDecoration(
-            color: kMilk,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: kGold.withOpacity(0.2))),
-          child: Text('⬇️ Pull down to refresh',
-            style: TextStyle(fontSize: 11,
-              color: kTextLight.withOpacity(0.6)))),
-      ]),
+            color: kWhite,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: kGold.withOpacity(0.15)),
+            boxShadow: [BoxShadow(
+              color: kGoldNeon.withOpacity(0.1),
+              blurRadius: 16, spreadRadius: 2)]),
+          child: Column(children: [
+            Container(
+              width: 72, height: 72,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: kGold.withOpacity(0.1)),
+              child: const Icon(Icons.cell_tower,
+                color: kGold, size: 36)),
+            const SizedBox(height: 16),
+            const Text('The Sanctuary',
+              style: TextStyle(fontSize: 22,
+                fontWeight: FontWeight.w800, color: kText)),
+            const SizedBox(height: 8),
+            Text(
+              isPastor
+                ? 'No class is live.\nTap "Start a Class" to begin.'
+                : 'No class is live right now.\nYour Pastor will start when ready.',
+              style: TextStyle(fontSize: 13, height: 1.5,
+                color: kTextLight.withOpacity(0.7)),
+              textAlign: TextAlign.center),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: kMilk,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: kGold.withOpacity(0.2))),
+              child: Text('⬇️ Pull down to refresh',
+                style: TextStyle(fontSize: 11,
+                  color: kTextLight.withOpacity(0.6)))),
+          ]),
+        );
+      },
     );
   }
 
