@@ -205,6 +205,13 @@ class LifestonesApp extends StatelessWidget {
                   return const SplashScreen();
                 }
                 final data = userSnap.data?.data() as Map<String, dynamic>?;
+                // Check if banned - send back to login
+                if (data?['banned'] == true) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) async {
+                    await FirebaseAuth.instance.signOut();
+                  });
+                  return const LoginScreen();
+                }
                 // Check roleSetAt - only users who went through role selection have this
                 final roleSet = data?['roleSetAt'] != null;
                 if (!roleSet) return const RoleSelectionScreen();
@@ -3152,6 +3159,28 @@ class _MessagesScreenState extends State<MessagesScreen> {
                       color: isMe ? kWhite : kText,
                       fontSize: 14, height: 1.4)),
                     const SizedBox(height: 2),
+                    if ((data['reactions'] as Map?)?.isNotEmpty == true)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Wrap(
+                          spacing: 4,
+                          children: ((data['reactions'] as Map?) ?? {})
+                            .values.toSet().map((emoji) {
+                              final count = ((data['reactions'] as Map?) ?? {})
+                                .values.where((e) => e == emoji).length;
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: kGold.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: kGold.withOpacity(0.3))),
+                                child: Text(
+                                  count > 1 ? '$emoji $count' : emoji,
+                                  style: const TextStyle(fontSize: 12)));
+                            }).toList(),
+                        )),
                     Text(time, style: TextStyle(fontSize: 10,
                       color: isMe
                         ? kWhite.withOpacity(0.6)
