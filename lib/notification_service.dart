@@ -64,4 +64,22 @@ class NotificationService {
       body: preview,
     );
   }
+
+  static Future<void> showLocalNotification({
+    required String title,
+    required String body,
+  }) async {
+    const android = AndroidNotificationDetails(
+      'scheduled_channel',
+      'Class Reminders',
+      channelDescription: 'Reminders for scheduled classes',
+      importance: Importance.max,
+      priority: Priority.high,
+      playSound: true,
+    );
+    const details = NotificationDetails(android: android);
+    await _local.show(
+      DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      title, body, details);
+  }
 }

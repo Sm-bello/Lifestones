@@ -1951,24 +1951,7 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
     );
   }
 
-  Widget _buildStartButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: () => _showRoleDialog(isStarting: true),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: kGold,
-          foregroundColor: kWhite,
-          padding: const EdgeInsets.symmetric(vertical: 18),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16)),
-          elevation: 6,
-          shadowColor: kGoldNeon.withOpacity(0.4)),
-        child: const Text('Start a Class 🔴',
-          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
-      ),
-    );
-  }
+
 
   Widget _buildScheduleSection() {
     return Container(
