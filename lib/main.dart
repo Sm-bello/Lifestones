@@ -109,13 +109,13 @@ void _scheduleDailyBibleNotification() {
     try {
       final now = DateTime.now();
       if (now.hour == 7 && now.minute < 60) {
-        final plans = [
+        final List<Map<String,String>> plans = [
           {'book': 'Genesis 1-2', 'theme': 'Creation',
            'summary': 'God creates the heavens, earth, and mankind in His image.'},
           {'book': 'Genesis 3-4', 'theme': 'The Fall',
            'summary': 'Sin enters the world through disobedience. The first murder recorded.'},
           {'book': 'Psalm 1', 'theme': 'The Blessed Man',
-           'summary': 'The man who meditates on God's word day and night prospers in all he does.'},
+           'summary': 'The man who meditates on Gods word day and night prospers in all he does.'},
           {'book': 'Proverbs 1', 'theme': 'Wisdom',
            'summary': 'Fear the Lord — the beginning of wisdom. Wisdom calls but fools reject her.'},
           {'book': 'Matthew 1-2', 'theme': 'Birth of Jesus',
@@ -123,12 +123,12 @@ void _scheduleDailyBibleNotification() {
           {'book': 'John 1', 'theme': 'The Word',
            'summary': 'In the beginning was the Word. Jesus becomes flesh and dwells among us.'},
           {'book': 'Romans 8', 'theme': 'Life in the Spirit',
-           'summary': 'No condemnation for those in Christ. Nothing separates us from God's love.'},
+           'summary': 'No condemnation for those in Christ. Nothing separates us from Gods love.'},
         ];
         final today = now.weekday - 1;
         final plan = plans[today % plans.length];
         await NotificationService.showLocalNotification(
-          title: '📖 Today's Bible Reading — ${plan["theme"]}',
+          title: '📖 Daily Bible Reading - ${plan["theme"]}',
           body: '${plan["book"]}: ${plan["summary"]}',
         );
       }
@@ -1315,13 +1315,13 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
 
 
   Widget _buildBiblePlanLayer() {
-    final plans = [
+    final List<Map<String,String>> plans = [
       {'day': 'Day 1', 'book': 'Genesis 1-2', 'theme': 'Creation',
        'summary': 'God creates the heavens, earth, and mankind in His image. He rests on the seventh day and calls it holy.'},
       {'day': 'Day 2', 'book': 'Genesis 3-4', 'theme': 'The Fall',
        'summary': 'Adam and Eve disobey God and sin enters the world. Cain kills Abel — the first murder recorded in scripture.'},
       {'day': 'Day 3', 'book': 'Psalm 1', 'theme': 'The Blessed Man',
-       'summary': 'The man who meditates on God's word day and night is like a tree planted by rivers of water — he prospers in all he does.'},
+       'summary': 'The man who meditates on Gods word day and night is like a tree planted by rivers of water. He prospers in all he does.'},
       {'day': 'Day 4', 'book': 'Proverbs 1', 'theme': 'Wisdom',
        'summary': 'Solomon calls us to fear the Lord — the beginning of all wisdom. Wisdom cries out in the streets but fools reject her call.'},
       {'day': 'Day 5', 'book': 'Matthew 1-2', 'theme': 'Birth of Jesus',
