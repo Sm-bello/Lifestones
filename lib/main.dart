@@ -2185,9 +2185,15 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14)),
                   elevation: 0),
-                child: const Text('End',
-                  style: TextStyle(fontSize: 14,
-                    fontWeight: FontWeight.w800)),
+                child: const Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('End Class',
+                        style: TextStyle(color: kWhite,
+                          fontWeight: FontWeight.w800, fontSize: 12)),
+                      Text('saves recording',
+                        style: TextStyle(color: kWhite70, fontSize: 9)),
+                    ]),
               ),
             ],
           ]),
@@ -3100,19 +3106,55 @@ class _MessagesScreenState extends State<MessagesScreen> {
           Flexible(
             child: GestureDetector(
               onLongPress: () {
-                if (isMe) {
-                  showModalBottomSheet(
-                    context: context,
-                    builder: (_) => ListTile(
-                      leading: const Icon(Icons.delete, color: kRed),
-                      title: const Text('Delete message'),
-                      onTap: () {
-                        FirebaseService.deleteMessage(docId);
-                        Navigator.pop(context);
-                      },
+                showModalBottomSheet(
+                  context: context,
+                  backgroundColor: kWhite,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(20))),
+                  builder: (_) => SafeArea(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: ['👍','🙏','❤️','😂','🔥','😮'].map((emoji) =>
+                            GestureDetector(
+                              onTap: () async {
+                                Navigator.pop(context);
+                                final uid = FirebaseAuth.instance.currentUser?.uid;
+                                if (uid != null) {
+                                  await FirebaseFirestore.instance
+                                    .collection('messages').doc(docId)
+                                    .update({'reactions.$uid': emoji});
+                                }
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                child: Text(emoji,
+                                  style: const TextStyle(fontSize: 30))))).toList(),
+                        ),
+                        const Divider(),
+                        ListTile(
+                          leading: const Icon(Icons.reply, color: kGold),
+                          title: const Text('Reply'),
+                          onTap: () {
+                            Navigator.pop(context);
+                            setState(() => _replyTo = data);
+                          }),
+                        if (isMe) ListTile(
+                          leading: const Icon(Icons.delete, color: kRed),
+                          title: const Text('Delete'),
+                          onTap: () {
+                            FirebaseService.deleteMessage(docId);
+                            Navigator.pop(context);
+                          }),
+                        const SizedBox(height: 8),
+                      ],
                     ),
-                  );
-                }
+                  ),
+                );
               },
               child: Container(
                 padding: const EdgeInsets.symmetric(
