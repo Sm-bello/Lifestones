@@ -107,6 +107,12 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Generate app icons
+        run: |
+          dart run flutter_launcher_icons
+          echo "✅ Icons generated from logo.png!"
+          ls android/app/src/main/res/mipmap-hdpi/
+
       - name: Build Release APK
         run: flutter build apk --release --split-per-abi --android-skip-build-dependency-validation
 
