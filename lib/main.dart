@@ -117,7 +117,8 @@ class LifestonesApp extends StatelessWidget {
                   return const SplashScreen();
                 }
                 final data = userSnap.data?.data() as Map<String, dynamic>?;
-                final roleSet = data?['role'] != null;
+                // Check roleSetAt - only users who went through role selection have this
+                final roleSet = data?['roleSetAt'] != null;
                 if (!roleSet) return const RoleSelectionScreen();
                 return const MainShell();
               },
