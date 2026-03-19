@@ -103,6 +103,40 @@ void main() async {
   runApp(const LifestonesApp());
 }
 
+void _scheduleDailyBibleNotification() {
+  Future.doWhile(() async {
+    await Future.delayed(const Duration(hours: 1));
+    try {
+      final now = DateTime.now();
+      if (now.hour == 7 && now.minute < 60) {
+        final plans = [
+          {'book': 'Genesis 1-2', 'theme': 'Creation',
+           'summary': 'God creates the heavens, earth, and mankind in His image.'},
+          {'book': 'Genesis 3-4', 'theme': 'The Fall',
+           'summary': 'Sin enters the world through disobedience. The first murder recorded.'},
+          {'book': 'Psalm 1', 'theme': 'The Blessed Man',
+           'summary': 'The man who meditates on God's word day and night prospers in all he does.'},
+          {'book': 'Proverbs 1', 'theme': 'Wisdom',
+           'summary': 'Fear the Lord — the beginning of wisdom. Wisdom calls but fools reject her.'},
+          {'book': 'Matthew 1-2', 'theme': 'Birth of Jesus',
+           'summary': 'Jesus is born in Bethlehem. Wise men worship Him. Herod seeks to destroy the child.'},
+          {'book': 'John 1', 'theme': 'The Word',
+           'summary': 'In the beginning was the Word. Jesus becomes flesh and dwells among us.'},
+          {'book': 'Romans 8', 'theme': 'Life in the Spirit',
+           'summary': 'No condemnation for those in Christ. Nothing separates us from God's love.'},
+        ];
+        final today = now.weekday - 1;
+        final plan = plans[today % plans.length];
+        await NotificationService.showLocalNotification(
+          title: '📖 Today's Bible Reading — ${plan["theme"]}',
+          body: '${plan["book"]}: ${plan["summary"]}',
+        );
+      }
+    } catch (e) { debugPrint('Bible notify: \$e'); }
+    return true;
+  });
+}
+
 void _checkScheduledMeetings() {
   // Check every minute for upcoming meetings
   Future.doWhile(() async {
@@ -1282,13 +1316,20 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
 
   Widget _buildBiblePlanLayer() {
     final plans = [
-      {'day': 'Day 1', 'book': 'Genesis 1-2', 'theme': 'Creation'},
-      {'day': 'Day 2', 'book': 'Genesis 3-4', 'theme': 'The Fall'},
-      {'day': 'Day 3', 'book': 'Psalm 1', 'theme': 'The Blessed Man'},
-      {'day': 'Day 4', 'book': 'Proverbs 1', 'theme': 'Wisdom'},
-      {'day': 'Day 5', 'book': 'Matthew 1-2', 'theme': 'Birth of Jesus'},
-      {'day': 'Day 6', 'book': 'John 1', 'theme': 'The Word'},
-      {'day': 'Day 7', 'book': 'Romans 8', 'theme': 'Life in the Spirit'},
+      {'day': 'Day 1', 'book': 'Genesis 1-2', 'theme': 'Creation',
+       'summary': 'God creates the heavens, earth, and mankind in His image. He rests on the seventh day and calls it holy.'},
+      {'day': 'Day 2', 'book': 'Genesis 3-4', 'theme': 'The Fall',
+       'summary': 'Adam and Eve disobey God and sin enters the world. Cain kills Abel — the first murder recorded in scripture.'},
+      {'day': 'Day 3', 'book': 'Psalm 1', 'theme': 'The Blessed Man',
+       'summary': 'The man who meditates on God's word day and night is like a tree planted by rivers of water — he prospers in all he does.'},
+      {'day': 'Day 4', 'book': 'Proverbs 1', 'theme': 'Wisdom',
+       'summary': 'Solomon calls us to fear the Lord — the beginning of all wisdom. Wisdom cries out in the streets but fools reject her call.'},
+      {'day': 'Day 5', 'book': 'Matthew 1-2', 'theme': 'Birth of Jesus',
+       'summary': 'Jesus is born of a virgin in Bethlehem. Wise men follow a star to worship Him. Herod seeks to destroy the child.'},
+      {'day': 'Day 6', 'book': 'John 1', 'theme': 'The Word',
+       'summary': 'In the beginning was the Word, and the Word was God. Jesus — the light of the world — becomes flesh and dwells among us.'},
+      {'day': 'Day 7', 'book': 'Romans 8', 'theme': 'Life in the Spirit',
+       'summary': 'There is no condemnation for those in Christ. The Spirit gives life and power. Nothing can separate us from the love of God.'},
     ];
     final today = DateTime.now().weekday - 1;
     final todayPlan = plans[today % plans.length];
@@ -1353,10 +1394,26 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                       fontWeight: FontWeight.w800, color: kText)),
                   Text(todayPlan['theme']!,
                     style: TextStyle(fontSize: 12,
-                      color: kTextLight.withOpacity(0.7))),
+                      color: kGoldDark.withOpacity(0.8),
+                      fontWeight: FontWeight.w600)),
                 ],
               )),
             ]),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: kMilk,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: kGold.withOpacity(0.15))),
+            child: Text(
+              todayPlan['summary'] ?? '',
+              style: TextStyle(fontSize: 12,
+                color: kText.withOpacity(0.75),
+                height: 1.6,
+                fontStyle: FontStyle.italic),
+            ),
           ),
           const SizedBox(height: 10),
           Row(
