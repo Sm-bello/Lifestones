@@ -599,6 +599,7 @@ class _MainShellState extends State<MainShell> {
     MeetingsScreen(),
     MembersScreen(),
     MessagesScreen(),
+    PrayerScreen(),
     ProfileScreen(),
   ];
 
@@ -683,6 +684,10 @@ class _MainShellState extends State<MainShell> {
               ),
               activeIcon: const Icon(Icons.chat_bubble),
               label: 'Chat'),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.volunteer_activism_outlined),
+              activeIcon: Icon(Icons.volunteer_activism),
+              label: 'Prayer'),
             const BottomNavigationBarItem(
               icon: Icon(Icons.person_outline),
               activeIcon: Icon(Icons.person),
@@ -869,7 +874,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         GestureDetector(
           onTap: () {
             final shell = context.findAncestorStateOfType<_MainShellState>();
-            shell?.setState(() => shell._tab = 4);
+            shell?.setState(() => shell._tab = 5);
           },
           child: Container(
             width: 38, height: 38,
@@ -992,7 +997,13 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           StreamBuilder<QuerySnapshot>(
             stream: FirebaseService.getUpcomingMeetings(),
             builder: (ctx, snap) {
-              if (!snap.hasData || snap.data!.docs.isEmpty) {
+              final validDocs = snap.hasData
+                ? snap.data!.docs.where((d) {
+                    final data = d.data() as Map<String, dynamic>;
+                    return (data['downloadUrl'] ?? '').toString().isNotEmpty;
+                  }).toList()
+                : [];
+              if (!snap.hasData || validDocs.isEmpty) {
                 return Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -1264,7 +1275,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
             stream: FirebaseFirestore.instance
               .collection('recordings')
               .orderBy('endedAt', descending: true)
-              .limit(10)
+              .limit(20)
               .snapshots(),
             builder: (ctx, snap) {
               if (!snap.hasData || snap.data!.docs.isEmpty) {
@@ -1297,8 +1308,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                 );
               }
               return Column(
-                children: snap.data!.docs.map((doc) {
-                  final data = doc.data() as Map<String, dynamic>;
+                children: validDocs.map((doc) {
+                  final data = (doc as dynamic).data() as Map<String, dynamic>;
                   final ts = data['endedAt'] as Timestamp?;
                   final date = ts != null
                     ? DateFormat('EEE, MMM d · h:mm a').format(ts.toDate())
@@ -2998,6 +3009,337 @@ class _MessagesScreenState extends State<MessagesScreen> {
                   blurRadius: 8, spreadRadius: 1)]),
               child: const Icon(Icons.send, color: kWhite, size: 20))),
         ],
+      ),
+    );
+  }
+}
+
+// ══════════════════════════════════════════════
+//  PRAYER REQUESTS SCREEN
+// ══════════════════════════════════════════════
+class PrayerScreen extends StatefulWidget {
+  const PrayerScreen({super.key});
+  @override
+  State<PrayerScreen> createState() => _PrayerScreenState();
+}
+
+class _PrayerScreenState extends State<PrayerScreen> {
+  final User? _user = FirebaseAuth.instance.currentUser;
+  final _prayerCtrl = TextEditingController();
+
+  Future<void> _submitPrayer() async {
+    final text = _prayerCtrl.text.trim();
+    if (text.isEmpty) return;
+    await FirebaseFirestore.instance.collection('prayer_requests').add({
+      'text': text,
+      'uid': _user?.uid,
+      'name': _user?.displayName ?? 'Member',
+      'photo': _user?.photoURL ?? '',
+      'createdAt': FieldValue.serverTimestamp(),
+      'answered': false,
+      'response': '',
+    });
+    _prayerCtrl.clear();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('🙏 Prayer request submitted!'),
+          backgroundColor: kGreen));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: kMilkDeep,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+              child: Row(children: [
+                const Text('Prayer Requests',
+                  style: TextStyle(fontSize: 24,
+                    fontWeight: FontWeight.w800, color: kText)),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: kGold.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20)),
+                  child: const Text('🙏 Pray Together',
+                    style: TextStyle(fontSize: 11,
+                      color: kGoldDark, fontWeight: FontWeight.w600))),
+              ])),
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                  .collection('prayer_requests')
+                  .orderBy('createdAt', descending: true)
+                  .snapshots(),
+                builder: (ctx, snap) {
+                  if (!snap.hasData || snap.data!.docs.isEmpty) {
+                    return Center(child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text('🙏', style: TextStyle(fontSize: 48)),
+                        const SizedBox(height: 12),
+                        Text('No prayer requests yet.',
+                          style: TextStyle(fontSize: 15,
+                            color: kTextLight.withOpacity(0.6))),
+                        const SizedBox(height: 4),
+                        Text('Be the first to share a need.',
+                          style: TextStyle(fontSize: 13,
+                            color: kTextLight.withOpacity(0.4))),
+                      ],
+                    ));
+                  }
+                  return ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: snap.data!.docs.length,
+                    itemBuilder: (_, i) {
+                      final doc = snap.data!.docs[i];
+                      final data = doc.data() as Map<String, dynamic>;
+                      final answered = data['answered'] == true;
+                      final response = data['response'] ?? '';
+                      final ts = data['createdAt'] as Timestamp?;
+                      final date = ts != null
+                        ? DateFormat('MMM d · h:mm a').format(ts.toDate())
+                        : '';
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: answered
+                            ? kGreen.withOpacity(0.05) : kWhite,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: answered
+                            ? kGreen.withOpacity(0.3)
+                            : kGold.withOpacity(0.12)),
+                          boxShadow: [BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 8, offset: const Offset(0, 2))]),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(children: [
+                              Container(
+                                width: 32, height: 32,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: kGold.withOpacity(0.15)),
+                                child: Center(child: Text(
+                                  (data['name'] ?? 'M')[0].toUpperCase(),
+                                  style: const TextStyle(
+                                    color: kGold,
+                                    fontWeight: FontWeight.w800)))),
+                              const SizedBox(width: 8),
+                              Expanded(child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(data['name'] ?? 'Member',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: kText)),
+                                  Text(date, style: TextStyle(
+                                    fontSize: 10,
+                                    color: kTextLight.withOpacity(0.5))),
+                                ])),
+                              if (answered)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: kGreen.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(10)),
+                                  child: const Text('✅ Answered',
+                                    style: TextStyle(fontSize: 10,
+                                      color: kGreen,
+                                      fontWeight: FontWeight.w600))),
+                            ]),
+                            const SizedBox(height: 10),
+                            Text(data['text'] ?? '',
+                              style: TextStyle(fontSize: 14,
+                                color: kText.withOpacity(0.85),
+                                height: 1.5)),
+                            if (response.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: kGold.withOpacity(0.08),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: kGold.withOpacity(0.2))),
+                                child: Row(children: [
+                                  const Text('🎤 ',
+                                    style: TextStyle(fontSize: 12)),
+                                  Expanded(child: Text(response,
+                                    style: TextStyle(fontSize: 12,
+                                      color: kGoldDark,
+                                      fontStyle: FontStyle.italic))),
+                                ])),
+                            ],
+                            // Pastor response & mark answered
+                            StreamBuilder<DocumentSnapshot>(
+                              stream: FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(_user?.uid).snapshots(),
+                              builder: (ctx, userSnap) {
+                                final ud = userSnap.data?.data()
+                                  as Map<String, dynamic>?;
+                                if (ud?['role'] != 'pastor') {
+                                  return const SizedBox();
+                                }
+                                return Column(children: [
+                                  const SizedBox(height: 8),
+                                  Row(children: [
+                                    Expanded(
+                                      child: GestureDetector(
+                                        onTap: () => _showPastorResponse(
+                                          doc.id, data),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 6),
+                                          decoration: BoxDecoration(
+                                            color: kGold.withOpacity(0.1),
+                                            borderRadius:
+                                              BorderRadius.circular(10)),
+                                          child: const Text('💬 Respond',
+                                            style: TextStyle(fontSize: 12,
+                                              color: kGoldDark,
+                                              fontWeight: FontWeight.w600),
+                                            textAlign: TextAlign.center)))),
+                                    const SizedBox(width: 8),
+                                    if (!answered)
+                                      Expanded(
+                                        child: GestureDetector(
+                                          onTap: () async {
+                                            await doc.reference.update({
+                                              'answered': true});
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 6),
+                                            decoration: BoxDecoration(
+                                              color: kGreen.withOpacity(0.1),
+                                              borderRadius:
+                                                BorderRadius.circular(10)),
+                                            child: const Text('✅ Mark Answered',
+                                              style: TextStyle(fontSize: 12,
+                                                color: kGreen,
+                                                fontWeight: FontWeight.w600),
+                                              textAlign: TextAlign.center)))),
+                                  ]),
+                                ]);
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+            // Input bar
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              decoration: BoxDecoration(
+                color: kWhite,
+                boxShadow: [BoxShadow(
+                  color: kGold.withOpacity(0.08),
+                  blurRadius: 12, offset: const Offset(0, -3))]),
+              child: Row(children: [
+                Expanded(
+                  child: TextField(
+                    controller: _prayerCtrl,
+                    maxLines: null,
+                    decoration: InputDecoration(
+                      hintText: 'Share a prayer need... 🙏',
+                      hintStyle: TextStyle(
+                        color: kTextLight.withOpacity(0.4)),
+                      filled: true, fillColor: kMilk,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide.none),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide.none),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10)))),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: _submitPrayer,
+                  child: Container(
+                    width: 44, height: 44,
+                    decoration: BoxDecoration(
+                      color: kGold, shape: BoxShape.circle),
+                    child: const Icon(Icons.send,
+                      color: kWhite, size: 20))),
+              ]),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showPastorResponse(String docId, Map<String, dynamic> data) {
+    final ctrl = TextEditingController(text: data['response'] ?? '');
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: kWhite,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(24, 24, 24,
+          MediaQuery.of(ctx).viewInsets.bottom + 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Pastor Response',
+              style: TextStyle(fontSize: 20,
+                fontWeight: FontWeight.w800, color: kText)),
+            const SizedBox(height: 16),
+            TextField(
+              controller: ctrl,
+              maxLines: 4,
+              decoration: InputDecoration(
+                hintText: 'Write your response...',
+                filled: true, fillColor: kMilk,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: kGold.withOpacity(0.3))),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: kGold, width: 2)))),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () async {
+                  await FirebaseFirestore.instance
+                    .collection('prayer_requests')
+                    .doc(docId)
+                    .update({'response': ctrl.text.trim()});
+                  if (ctx.mounted) Navigator.pop(ctx);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kGold,
+                  foregroundColor: kWhite,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
+                  elevation: 0),
+                child: const Text('Send Response',
+                  style: TextStyle(fontWeight: FontWeight.w700)))),
+          ],
+        ),
       ),
     );
   }
