@@ -486,6 +486,15 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Security guard - must have Google account
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const LoginScreen()));
+      });
+      return const SplashScreen();
+    }
     return Scaffold(
       backgroundColor: kMilk,
       body: SafeArea(
@@ -1902,50 +1911,64 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance
         .collection('users').doc(_user?.uid).snapshots(),
-      builder: (ctx, snap) {
-        final data = snap.data?.data() as Map<String, dynamic>?;
-        final isPastor = data?['role'] == 'pastor';
-        return Container(
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            color: kWhite,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: kGold.withOpacity(0.15)),
-            boxShadow: [BoxShadow(
-              color: kGoldNeon.withOpacity(0.1),
-              blurRadius: 16, spreadRadius: 2)]),
-          child: Column(children: [
-            Container(
-              width: 72, height: 72,
+      builder: (ctx, userSnap) {
+        final userData = userSnap.data?.data() as Map<String, dynamic>?;
+        final isPastor = userData?['role'] == 'pastor';
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseService.getLiveMeetings(),
+          builder: (ctx, liveSnap) {
+            final hasLive = liveSnap.hasData &&
+              liveSnap.data!.docs.isNotEmpty;
+            return Container(
+              padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: kGold.withOpacity(0.1)),
-              child: const Icon(Icons.cell_tower,
-                color: kGold, size: 36)),
-            const SizedBox(height: 16),
-            const Text('The Sanctuary',
-              style: TextStyle(fontSize: 22,
-                fontWeight: FontWeight.w800, color: kText)),
-            const SizedBox(height: 8),
-            Text(
-              isPastor
-                ? 'No class is live.\nTap "Start a Class" to begin.'
-                : 'No class is live right now.\nYour Pastor will start when ready.',
-              style: TextStyle(fontSize: 13, height: 1.5,
-                color: kTextLight.withOpacity(0.7)),
-              textAlign: TextAlign.center),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                color: kMilk,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: kGold.withOpacity(0.2))),
-              child: Text('⬇️ Pull down to refresh',
-                style: TextStyle(fontSize: 11,
-                  color: kTextLight.withOpacity(0.6)))),
-          ]),
+                color: kWhite,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: kGold.withOpacity(0.15)),
+                boxShadow: [BoxShadow(
+                  color: kGoldNeon.withOpacity(0.1),
+                  blurRadius: 16, spreadRadius: 2)]),
+              child: Column(children: [
+                Container(
+                  width: 72, height: 72,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: hasLive
+                      ? kGold.withOpacity(0.15)
+                      : kGold.withOpacity(0.1)),
+                  child: Icon(
+                    hasLive ? Icons.wifi_tethering : Icons.cell_tower,
+                    color: kGold, size: 36)),
+                const SizedBox(height: 16),
+                Text(
+                  hasLive ? '🔴 Class is Live!' : 'The Sanctuary',
+                  style: TextStyle(
+                    fontSize: 22, fontWeight: FontWeight.w800,
+                    color: hasLive ? kGoldDark : kText)),
+                const SizedBox(height: 8),
+                Text(
+                  hasLive
+                    ? 'A class is in session.\nTap Join Live Service above!'
+                    : isPastor
+                      ? 'No class is live.\nTap "Start a Class" to begin.'
+                      : '⛪ Waiting for your Pastor to begin.\nPull down to refresh anytime.',
+                  style: TextStyle(fontSize: 13, height: 1.5,
+                    color: kTextLight.withOpacity(0.7)),
+                  textAlign: TextAlign.center),
+                const SizedBox(height: 12),
+                if (!hasLive) Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: kMilk,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: kGold.withOpacity(0.2))),
+                  child: Text('⬇️ Pull down to refresh',
+                    style: TextStyle(fontSize: 11,
+                      color: kTextLight.withOpacity(0.6)))),
+              ]),
+            );
+          },
         );
       },
     );
@@ -3231,6 +3254,73 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
+                  if (role == 'pastor')
+                    StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                        .collection('chat_requests')
+                        .where('status', isEqualTo: 'pending')
+                        .snapshots(),
+                      builder: (ctx, snap) {
+                        final count = snap.data?.docs.length ?? 0;
+                        return GestureDetector(
+                          onTap: () {
+                            final shell = context
+                              .findAncestorStateOfType<_MainShellState>();
+                            shell?.setState(() => shell._tab = 3);
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 10),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: count > 0
+                                ? kGold.withOpacity(0.08) : kWhite,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: count > 0
+                                ? kGold : kGold.withOpacity(0.12))),
+                            child: Row(children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: count > 0
+                                    ? kGold : kGold.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(10)),
+                                child: Icon(Icons.manage_accounts,
+                                  color: count > 0 ? kWhite : kGold,
+                                  size: 18)),
+                              const SizedBox(width: 12),
+                              Expanded(child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Chat Access Requests',
+                                    style: const TextStyle(fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: kText)),
+                                  Text(count > 0
+                                    ? '\$count member\${count > 1 ? "s" : ""} awaiting approval'
+                                    : 'No pending requests',
+                                    style: TextStyle(fontSize: 12,
+                                      color: count > 0
+                                        ? kGoldDark
+                                        : kTextLight.withOpacity(0.6))),
+                                ],
+                              )),
+                              if (count > 0) Container(
+                                width: 28, height: 28,
+                                decoration: const BoxDecoration(
+                                  color: kRed,
+                                  shape: BoxShape.circle),
+                                child: Center(child: Text('\$count',
+                                  style: const TextStyle(
+                                    color: kWhite, fontSize: 12,
+                                    fontWeight: FontWeight.w800)))),
+                              const SizedBox(width: 4),
+                              Icon(Icons.chevron_right,
+                                color: kGold.withOpacity(0.4), size: 20),
+                            ]),
+                          ),
+                        );
+                      },
+                    ),
                   _buildTile(Icons.notifications_outlined,
                     'Class Reminders', 'Fri, Sat, Sun · 30 min before'),
                   _buildTile(Icons.info_outline,
@@ -3240,7 +3330,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton(
-                      onPressed: () async => await signOut(),
+                      onPressed: () async {
+                        await signOut();
+                        if (context.mounted) {
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(
+                              builder: (_) => const LoginScreen()),
+                            (route) => false);
+                        }
+                      },
                       style: OutlinedButton.styleFrom(
                         foregroundColor: kRed,
                         side: const BorderSide(color: kRed),
