@@ -1937,13 +1937,34 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
 
   Future<void> _endMeetingAndRecord(String roomCode) async {
     final user = FirebaseAuth.instance.currentUser;
-    await FirebaseFirestore.instance.collection('recordings').add({
-      'roomCode': roomCode,
-      'endedAt': FieldValue.serverTimestamp(),
-      'endedBy': user?.displayName ?? 'Member',
-      'uid': user?.uid,
-      'title': 'Lifestones Class - $roomCode',
-    });
+    // Stop recording and upload to Firebase Storage
+    try {
+      if (_isRecording) {
+        final path = await _recorder.stop();
+        setState(() => _isRecording = false);
+        if (path != null && path.isNotEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Uploading recording...'),
+              duration: Duration(seconds: 2)));
+          await FirebaseService.saveRecording(
+            localPath: path,
+            roomCode: roomCode,
+            topic: _currentTopic ?? 'Lifestones Class',
+            starterUid: user?.uid ?? '',
+            starterName: user?.displayName ?? 'Pastor',
+          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Recording saved to Past Recordings'),
+                backgroundColor: kGreen));
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Recording upload error: \$e');
+    }
     await FirebaseService.endMeeting(roomCode);
   }
 

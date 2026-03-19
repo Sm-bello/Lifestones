@@ -129,6 +129,47 @@ class FirebaseService {
         .snapshots();
   }
 
+  static Future<void> saveRecording({
+    required String localPath,
+    required String roomCode,
+    required String topic,
+    required String starterUid,
+    required String starterName,
+  }) async {
+    try {
+      final file = File(localPath);
+      if (!await file.exists()) {
+        debugPrint('Recording file not found: \$localPath');
+        return;
+      }
+      final fileName = 'recordings/\$roomCode-\${DateTime.now().millisecondsSinceEpoch}.m4a';
+      final ref = FirebaseStorage.instance.ref().child(fileName);
+      final uploadTask = await ref.putFile(file);
+      final downloadUrl = await uploadTask.ref.getDownloadURL();
+      await _db.collection('recordings').add({
+        'roomCode': roomCode,
+        'topic': topic,
+        'starterUid': starterUid,
+        'starterName': starterName,
+        'downloadUrl': downloadUrl,
+        'localPath': localPath,
+        'endedAt': FieldValue.serverTimestamp(),
+        'duration': 0,
+      });
+      debugPrint('Recording saved: \$downloadUrl');
+    } catch (e) {
+      debugPrint('Recording save error: \$e');
+    }
+  }
+
+  static Stream<QuerySnapshot> getRecordings() {
+    return _db
+      .collection('recordings')
+      .orderBy('endedAt', descending: true)
+      .limit(20)
+      .snapshots();
+  }
+
   static Stream<QuerySnapshot> getUpcomingMeetings() {
     return _db
         .collection('scheduled_meetings')
