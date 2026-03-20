@@ -3886,7 +3886,7 @@ class _BibleScreenState extends State<BibleScreen> {
                           color: kTextLight.withOpacity(0.7)),
                         textAlign: TextAlign.center),
                     ]))
-                : _passageText.isEmpty
+                : (_verses.isEmpty && _passageText.isEmpty)
                   ? Center(child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
