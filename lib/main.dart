@@ -458,7 +458,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
       if (pin == null || pin.isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('❌ Wrong PIN. Try again.'),
+            const SnackBar(
+              content: Text('Wrong PIN. Try again.'),
               backgroundColor: kRed));
         }
         return;
@@ -471,12 +472,12 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
         await FirebaseFirestore.instance
           .collection('users').doc(uid).set({
             'role': role,
-            'chatApproved': role == 'pastor',
             'roleSetAt': FieldValue.serverTimestamp(),
+            'chatApproved': role == 'pastor',
           }, SetOptions(merge: true));
       }
     } catch (e) {
-      debugPrint('Role set error: \$e');
+      debugPrint('Role error: \$e');
     }
     if (mounted) {
       setState(() => _loading = false);
@@ -492,9 +493,12 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
         .collection('app_config').doc('security').get();
       if (doc.exists && doc.data()?['pastor_pin'] != null) {
         correctPin = doc.data()!['pastor_pin'];
+      } else {
+        await FirebaseFirestore.instance
+          .collection('app_config').doc('security')
+          .set({'pastor_pin': '7749'}, SetOptions(merge: true));
       }
     } catch (e) { debugPrint('PIN: \$e'); }
-
     final ctrl = TextEditingController();
     bool wrongPin = false;
     final result = await showDialog<String>(
@@ -506,12 +510,11 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20)),
           title: const Text('Pastor PIN',
-            style: TextStyle(
-              fontWeight: FontWeight.w800, color: kText)),
+            style: TextStyle(fontWeight: FontWeight.w800, color: kText)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Enter your Pastor PIN to continue',
+              const Text('Enter your Pastor PIN',
                 style: TextStyle(fontSize: 13)),
               const SizedBox(height: 12),
               TextField(
@@ -519,10 +522,11 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                 keyboardType: TextInputType.number,
                 obscureText: true,
                 maxLength: 6,
+                autofocus: true,
                 decoration: InputDecoration(
                   hintText: 'Enter PIN',
                   counterText: '',
-                  errorText: wrongPin ? 'Wrong PIN' : null,
+                  errorText: wrongPin ? 'Incorrect PIN' : null,
                   filled: true, fillColor: kMilk,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),

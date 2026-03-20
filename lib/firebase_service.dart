@@ -26,7 +26,7 @@ class FirebaseService {
       
       'joinedAt': FieldValue.serverTimestamp(),
       'classesAttended': 0,
-    });
+    }, SetOptions(merge: true));
   }
 
   static Stream<DocumentSnapshot> getUserStream(String uid) {
