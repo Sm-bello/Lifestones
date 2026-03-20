@@ -289,7 +289,6 @@ class _LoginScreenState extends State<LoginScreen>
         _loading = false;
       });
     }
-    // If we get here with a user, StreamBuilder handles navigation
     if (mounted) setState(() => _loading = false);
   }
 
