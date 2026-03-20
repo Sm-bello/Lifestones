@@ -41,6 +41,7 @@ flutter:
   assets:
     - assets/logo.png
     - assets/hymns.json
+    - assets/kjv.json
 
 flutter_launcher_icons:
   android: "launcher_icon"
