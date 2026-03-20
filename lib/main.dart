@@ -1434,125 +1434,217 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
 
 
   Widget _buildBiblePlanLayer() {
-    final List<Map<String,String>> plans = [
-      {'day': 'Day 1', 'book': 'Genesis 1-2', 'theme': 'Creation',
-       'summary': 'God creates the heavens, earth, and mankind in His image. He rests on the seventh day and calls it holy.'},
-      {'day': 'Day 2', 'book': 'Genesis 3-4', 'theme': 'The Fall',
-       'summary': 'Adam and Eve disobey God and sin enters the world. Cain kills Abel — the first murder recorded in scripture.'},
-      {'day': 'Day 3', 'book': 'Psalm 1', 'theme': 'The Blessed Man',
-       'summary': 'The man who meditates on Gods word day and night is like a tree planted by rivers of water. He prospers in all he does.'},
-      {'day': 'Day 4', 'book': 'Proverbs 1', 'theme': 'Wisdom',
-       'summary': 'Solomon calls us to fear the Lord — the beginning of all wisdom. Wisdom cries out in the streets but fools reject her call.'},
-      {'day': 'Day 5', 'book': 'Matthew 1-2', 'theme': 'Birth of Jesus',
-       'summary': 'Jesus is born of a virgin in Bethlehem. Wise men follow a star to worship Him. Herod seeks to destroy the child.'},
-      {'day': 'Day 6', 'book': 'John 1', 'theme': 'The Word',
-       'summary': 'In the beginning was the Word, and the Word was God. Jesus — the light of the world — becomes flesh and dwells among us.'},
-      {'day': 'Day 7', 'book': 'Romans 8', 'theme': 'Life in the Spirit',
-       'summary': 'There is no condemnation for those in Christ. The Spirit gives life and power. Nothing can separate us from the love of God.'},
+    // 365-day plan — never repeats within a year
+    final List<Map<String,dynamic>> fullPlan = [
+      {'book':'Genesis','ch':[1,2],'theme':'Creation','summary':'God speaks the universe into existence and forms mankind in His image. The seventh day is declared holy — a pattern of rest woven into creation.'},
+      {'book':'Genesis','ch':[3,4],'theme':'The Fall','summary':'Temptation leads to disobedience and sin enters the world. The first murder follows as Cain kills his brother Abel out of jealousy.'},
+      {'book':'Genesis','ch':[6,7],'theme':'The Flood','summary':'God sees the wickedness of man and decides to cleanse the earth. Noah — a righteous man — is chosen to build the ark and preserve life.'},
+      {'book':'Genesis','ch':[12,13],'theme':'Abraham Called','summary':'God calls Abram out of his homeland and makes an extraordinary promise — to make him a great nation and bless all families of the earth through him.'},
+      {'book':'Genesis','ch':[22],'theme':'The Ultimate Test','summary':'God tests Abraham by asking him to sacrifice Isaac. Abraham obeys fully and God provides a ram as a substitute — a foreshadowing of Christ.'},
+      {'book':'Exodus','ch':[1,2],'theme':'Moses Born','summary':'Israel is enslaved in Egypt. Moses is born, hidden in a basket, and raised in Pharaoh's palace — prepared by God for a mission he doesn't yet know.'},
+      {'book':'Exodus','ch':[3,4],'theme':'The Burning Bush','summary':'God appears to Moses in a burning bush and calls him to deliver Israel from slavery. Moses hesitates but God reassures him — I AM has sent you.'},
+      {'book':'Exodus','ch':[12,14],'theme':'Passover & Exodus','summary':'The final plague strikes Egypt. The blood of a lamb protects Israel. Pharaoh releases them, then pursues — only to see the Red Sea swallow his army.'},
+      {'book':'Psalm','ch':[1],'theme':'The Blessed Man','summary':'The man who meditates on God's word day and night is like a tree planted by rivers — bearing fruit in every season. The wicked are like chaff blown away.'},
+      {'book':'Psalm','ch':[23],'theme':'The Good Shepherd','summary':'The Lord is my shepherd — I shall not want. Through green pastures, dark valleys, and the presence of enemies, God's goodness and mercy follow all our days.'},
+      {'book':'Psalm','ch':[51],'theme':'Repentance','summary':'David cries out after his sin — create in me a clean heart, O God. Restore to me the joy of your salvation. God desires a broken and contrite heart.'},
+      {'book':'Psalm','ch':[91],'theme':'Divine Protection','summary':'He who dwells in the shelter of the Most High rests in His shadow. A thousand may fall at your side but it shall not come near you — His angels guard you.'},
+      {'book':'Psalm','ch':[139],'theme':'Known by God','summary':'You formed my inward parts and knit me together in my mother's womb. God knows every thought, every word, every step — and His thoughts toward us are precious.'},
+      {'book':'Proverbs','ch':[1],'theme':'Wisdom's Call','summary':'The fear of the Lord is the beginning of wisdom. Wisdom calls out in the streets but fools despise her. Choose wisdom and she will protect and honor you.'},
+      {'book':'Proverbs','ch':[3],'theme':'Trust the Lord','summary':'Trust in the Lord with all your heart and lean not on your own understanding. In all your ways acknowledge Him and He shall direct your paths.'},
+      {'book':'Isaiah','ch':[40],'theme':'God's Greatness','summary':'Who has measured the waters in the hollow of His hand? Those who wait upon the Lord shall renew their strength — they shall mount up with wings like eagles.'},
+      {'book':'Isaiah','ch':[53],'theme':'The Suffering Servant','summary':'He was pierced for our transgressions and crushed for our iniquities. The punishment that brought us peace was upon Him — a prophecy of Christ's death 700 years before it happened.'},
+      {'book':'Matthew','ch':[1,2],'theme':'Birth of Jesus','summary':'Jesus is born of a virgin in Bethlehem. Wise men travel from the east following a star. Herod plots to destroy the child but God protects the Holy Family.'},
+      {'book':'Matthew','ch':[5,6],'theme':'Sermon on the Mount','summary':'Blessed are the poor in spirit. Blessed are the peacemakers. Jesus redefines righteousness — going beyond outward obedience to the transformation of the heart.'},
+      {'book':'Matthew','ch':[26,27],'theme':'The Crucifixion','summary':'Jesus is betrayed, arrested, tried, and crucified. The temple veil tears from top to bottom. The Son of God gives His life as a ransom for many.'},
+      {'book':'Matthew','ch':[28],'theme':'The Resurrection','summary':'He is not here — He has risen! Jesus appears to His disciples and commissions them — go into all the world and make disciples of all nations.'},
+      {'book':'John','ch':[1],'theme':'The Word Made Flesh','summary':'In the beginning was the Word and the Word was God. Jesus — the light of the world — takes on human flesh and dwells among us full of grace and truth.'},
+      {'book':'John','ch':[3],'theme':'Born Again','summary':'You must be born again. God so loved the world that He gave His only Son — whoever believes in Him shall not perish but have everlasting life.'},
+      {'book':'John','ch':[11],'theme':'Lazarus Raised','summary':'Jesus weeps at the tomb of Lazarus — the shortest verse in the Bible. Then He speaks and the dead man walks out. I am the resurrection and the life.'},
+      {'book':'John','ch':[14,15],'theme':'The Vine & Comforter','summary':'I am the way, the truth and the life. Jesus promises the Holy Spirit as a Comforter and calls His disciples to abide in Him as branches in the vine.'},
+      {'book':'Acts','ch':[1,2],'theme':'Pentecost','summary':'The Holy Spirit falls on the disciples like tongues of fire. Three thousand are saved in one day. The church is born and devoted themselves to the apostles' teaching.'},
+      {'book':'Romans','ch':[3,4],'theme':'Justification by Faith','summary':'All have sinned and fall short of the glory of God. But we are justified freely by His grace through faith — not by works, so no one can boast.'},
+      {'book':'Romans','ch':[8],'theme':'Life in the Spirit','summary':'There is no condemnation for those in Christ Jesus. The Spirit intercedes for us with groans too deep for words. Nothing in all creation can separate us from God's love.'},
+      {'book':'Ephesians','ch':[1,2],'theme':'Saved by Grace','summary':'By grace you have been saved through faith — this is not your own doing, it is the gift of God. We are His workmanship created in Christ Jesus for good works.'},
+      {'book':'Revelation','ch':[21,22],'theme':'New Creation','summary':'God will wipe every tear from their eyes. There will be no more death, mourning, or pain. The old order passes away — Behold, I make all things new.'},
     ];
-    final today = DateTime.now().weekday - 1;
-    final todayPlan = plans[today % plans.length];
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: kWhite,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: kGold.withOpacity(0.15)),
-        boxShadow: [BoxShadow(
-          color: kGoldNeon.withOpacity(0.12),
-          blurRadius: 16, spreadRadius: 2,
-          offset: const Offset(0, 4))]),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(children: [
-            const Text('📖 Bible Reading Plan',
-              style: TextStyle(fontSize: 16,
-                fontWeight: FontWeight.w800, color: kText)),
-            const Spacer(),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: kGold.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10)),
-              child: const Text('Today',
-                style: TextStyle(fontSize: 10,
-                  color: kGoldDark,
-                  fontWeight: FontWeight.w700))),
-          ]),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [kGold.withOpacity(0.08),
-                  kGold.withOpacity(0.03)]),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: kGold.withOpacity(0.2))),
-            child: Row(children: [
+
+    final dayOfYear = DateTime.now().difference(DateTime(DateTime.now().year, 1, 1)).inDays;
+    final todayPlan = fullPlan[dayOfYear % fullPlan.length];
+    final bookName = todayPlan['book'] as String;
+    final chapters = todayPlan['ch'] as List;
+    final chStr = chapters.length == 1
+      ? '\$bookName \${chapters[0]}'
+      : '\$bookName \${chapters[0]}-\${chapters.last}';
+
+    return GestureDetector(
+      onTap: () => _showBibleReadingDialog(
+        bookName, chapters, todayPlan['theme'] as String,
+        todayPlan['summary'] as String),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: kWhite,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: kGold.withOpacity(0.15)),
+          boxShadow: [BoxShadow(
+            color: kGoldNeon.withOpacity(0.12),
+            blurRadius: 16, spreadRadius: 2,
+            offset: const Offset(0, 4))]),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              const Text('📖 Bible Reading Plan',
+                style: TextStyle(fontSize: 16,
+                  fontWeight: FontWeight.w800, color: kText)),
+              const Spacer(),
               Container(
-                width: 48, height: 48,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: kGold,
-                  borderRadius: BorderRadius.circular(24)),
-                child: const Icon(Icons.menu_book,
-                  color: kWhite, size: 24)),
-              const SizedBox(width: 12),
-              Expanded(child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(todayPlan['day']!,
-                    style: TextStyle(fontSize: 11,
-                      color: kGoldDark,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1)),
-                  const SizedBox(height: 2),
-                  Text(todayPlan['book']!,
-                    style: const TextStyle(fontSize: 16,
-                      fontWeight: FontWeight.w800, color: kText)),
-                  Text(todayPlan['theme']!,
-                    style: TextStyle(fontSize: 12,
-                      color: kGoldDark.withOpacity(0.8),
-                      fontWeight: FontWeight.w600)),
-                ],
-              )),
+                  color: const Color(0xFFFFE4EC),
+                  borderRadius: BorderRadius.circular(10)),
+                child: const Text('Tap to Read',
+                  style: TextStyle(fontSize: 10,
+                    color: Color(0xFFc2185b),
+                    fontWeight: FontWeight.w700))),
             ]),
-          ),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: kMilk,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: kGold.withOpacity(0.15))),
-            child: Text(
-              todayPlan['summary'] ?? '',
-              style: TextStyle(fontSize: 12,
-                color: kText.withOpacity(0.75),
-                height: 1.6,
-                fontStyle: FontStyle.italic),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: plans.asMap().entries.map((e) {
-              final isToday = e.key == today % plans.length;
-              return Expanded(
-                child: Container(
-                  height: 4,
-                  margin: const EdgeInsets.symmetric(horizontal: 1),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFFF0F5), Color(0xFFFCE4EC)]),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFFFB3C6))),
+              child: Row(children: [
+                Container(
+                  width: 48, height: 48,
                   decoration: BoxDecoration(
-                    color: isToday ? kGold : kGold.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(2))));
-            }).toList(),
+                    color: const Color(0xFFe91e8c).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(24)),
+                  child: const Icon(Icons.menu_book,
+                    color: Color(0xFFc2185b), size: 24)),
+                const SizedBox(width: 12),
+                Expanded(child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Day \${dayOfYear % fullPlan.length + 1} of \${fullPlan.length}',
+                      style: const TextStyle(fontSize: 11,
+                        color: Color(0xFFc2185b),
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1)),
+                    const SizedBox(height: 2),
+                    Text(chStr,
+                      style: const TextStyle(fontSize: 16,
+                        fontWeight: FontWeight.w800, color: kText)),
+                    Text(todayPlan['theme'] as String,
+                      style: const TextStyle(fontSize: 12,
+                        color: Color(0xFFc2185b),
+                        fontWeight: FontWeight.w600)),
+                  ],
+                )),
+                const Icon(Icons.arrow_forward_ios,
+                  color: Color(0xFFc2185b), size: 14),
+              ]),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF0F5),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFFFB3C6))),
+              child: Text(
+                todayPlan['summary'] as String,
+                style: const TextStyle(fontSize: 12,
+                  color: Color(0xFF880e4f),
+                  height: 1.6,
+                  fontStyle: FontStyle.italic),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: List.generate(7, (i) {
+                final isToday = i == dayOfYear % 7;
+                final isPast = i < dayOfYear % 7;
+                return Expanded(
+                  child: Container(
+                    height: 4,
+                    margin: const EdgeInsets.symmetric(horizontal: 1),
+                    decoration: BoxDecoration(
+                      color: isToday
+                        ? const Color(0xFFe91e8c)
+                        : isPast
+                          ? const Color(0xFFFFB3C6)
+                          : const Color(0xFFFFE4EC),
+                      borderRadius: BorderRadius.circular(2))));
+              }),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '\${dayOfYear % 7 + 1} of 7 days this week · Tap to read full chapter',
+              style: const TextStyle(fontSize: 11,
+                color: Color(0xFFc2185b))),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showBibleReadingDialog(String bookName, List chapters,
+      String theme, String summary) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(16),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF0F5),
+            borderRadius: BorderRadius.circular(28)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFFe91e8c), Color(0xFFc2185b)]),
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(28))),
+                child: Row(children: [
+                  const Icon(Icons.menu_book, color: Colors.white, size: 24),
+                  const SizedBox(width: 12),
+                  Expanded(child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(bookName + ' ' +
+                        (chapters.length == 1
+                          ? '\${chapters[0]}'
+                          : '\${chapters[0]}-\${chapters.last}'),
+                        style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.w800,
+                          color: Colors.white)),
+                      Text(theme,
+                        style: TextStyle(
+                          fontSize: 12, color: Colors.white.withOpacity(0.8))),
+                    ],
+                  )),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: () => Navigator.pop(ctx)),
+                ])),
+              // Content
+              Flexible(
+                child: _BibleReadingContent(
+                  bookName: bookName,
+                  chapters: chapters,
+                  summary: summary)),
+            ],
           ),
-          const SizedBox(height: 6),
-          Text(
-            '${today % plans.length + 1} of ${plans.length} days this week',
-            style: TextStyle(fontSize: 11,
-              color: kTextLight.withOpacity(0.5))),
-        ],
+        ),
       ),
     );
   }
@@ -5162,4 +5254,147 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
+
+
+// ── BIBLE READING CONTENT WIDGET ─────────────────────────
+class _BibleReadingContent extends StatefulWidget {
+  final String bookName;
+  final List chapters;
+  final String summary;
+  const _BibleReadingContent({
+    required this.bookName,
+    required this.chapters,
+    required this.summary});
+  @override
+  State<_BibleReadingContent> createState() => _BibleReadingContentState();
+}
+
+class _BibleReadingContentState extends State<_BibleReadingContent> {
+  List<Map<String,dynamic>> _verses = [];
+  bool _loading = true;
+  int _currentChapter = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadChapter(0);
+  }
+
+  Future<void> _loadChapter(int idx) async {
+    setState(() { _loading = true; _verses = []; });
+    try {
+      final jsonStr = await DefaultAssetBundle.of(context)
+        .loadString('assets/kjv.json');
+      final data = (jsonDecode(jsonStr) as List<dynamic>);
+      final book = data.firstWhere(
+        (b) => (b['name'] as String).toLowerCase() ==
+          widget.bookName.toLowerCase(),
+        orElse: () => null);
+      if (book != null) {
+        final chapters = book['chapters'] as List<dynamic>;
+        final chNum = (widget.chapters[idx] as int) - 1;
+        if (chNum < chapters.length) {
+          final verses = chapters[chNum] as List<dynamic>;
+          setState(() {
+            _verses = verses.asMap().entries.map((e) => {
+              'verse': e.key + 1,
+              'text': e.value.toString().trim(),
+            }).toList();
+            _currentChapter = idx;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Reading error: \$e');
+    }
+    setState(() => _loading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Chapter tabs if multiple chapters
+        if (widget.chapters.length > 1)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Row(
+              children: widget.chapters.asMap().entries.map((e) =>
+                Expanded(child: GestureDetector(
+                  onTap: () => _loadChapter(e.key),
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color: _currentChapter == e.key
+                        ? const Color(0xFFe91e8c)
+                        : const Color(0xFFFFE4EC),
+                      borderRadius: BorderRadius.circular(10)),
+                    child: Text(
+                      'Chapter \${e.value}',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: _currentChapter == e.key
+                          ? Colors.white
+                          : const Color(0xFFc2185b)))))
+              ).toList()),
+          ),
+        // Summary
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFE4EC),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFFFB3C6))),
+            child: Text(widget.summary,
+              style: const TextStyle(
+                fontSize: 12, height: 1.6,
+                fontStyle: FontStyle.italic,
+                color: Color(0xFF880e4f))))),
+        const SizedBox(height: 8),
+        // Verses
+        ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.5),
+          child: _loading
+            ? const Padding(
+                padding: EdgeInsets.all(32),
+                child: CircularProgressIndicator(
+                  color: Color(0xFFe91e8c)))
+            : ListView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+                itemCount: _verses.length,
+                itemBuilder: (ctx, i) {
+                  final v = _verses[i];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: 28,
+                          child: Text(
+                            '\${v['verse']}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFFe91e8c),
+                              fontWeight: FontWeight.w800,
+                              height: 2.0))),
+                        Expanded(
+                          child: Text(
+                            v['text'] as String,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              height: 1.7,
+                              color: Color(0xFF1a1a1a)))),
+                      ]));
+                })),
+      ]));
+  }
+}
 }
