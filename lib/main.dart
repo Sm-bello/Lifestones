@@ -3626,11 +3626,47 @@ class _BibleScreenState extends State<BibleScreen> {
 
   Future<void> _loadPassage() async {
     setState(() { _isLoading = true; _passageText = ''; _errorText = ''; });
+    
+    // --- OFFLINE KJV ENGINE ---
+    if (_selectedVersion == 'kjv') {
+      try {
+        final jsonString = await DefaultAssetBundle.of(context).loadString('assets/kjv.json');
+        final List<dynamic> bibleData = json.decode(jsonString);
+        final searchBook = _selectedBook.replaceAll('+', ' ');
+        
+        final bookData = bibleData.firstWhere(
+          (b) => b['name'].toString().toLowerCase() == searchBook.toLowerCase(),
+          orElse: () => null
+        );
+        
+        if (bookData != null) {
+          final chapters = bookData['chapters'] as List<dynamic>;
+          if (_selectedChapter > 0 && _selectedChapter <= chapters.length) {
+            final verses = chapters[_selectedChapter - 1] as List<dynamic>;
+            // Join verses with newlines to perfectly match the UI expectations
+            setState(() {
+               _passageText = verses.join('\n');
+               _errorText = '';
+            });
+          } else {
+            setState(() => _errorText = 'Chapter not found.');
+          }
+        } else {
+          setState(() => _errorText = 'Book not found.');
+        }
+      } catch (e) {
+        setState(() => _errorText = 'Error loading offline Bible.');
+      }
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    // --- ONLINE API ENGINE (For AMP, NIV, NLT) ---
     try {
       final book = _selectedBook.replaceAll(' ', '+');
       final url = 'https://bible-api.com/$book+$_selectedChapter?translation=$_selectedVersion';
-      final response = await http.get(Uri.parse(url))
-        .timeout(const Duration(seconds: 10));
+      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
+      
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() => _passageText = data['text'] ?? 'Passage not found');
