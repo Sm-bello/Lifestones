@@ -23,7 +23,7 @@ class FirebaseService {
       'email': user.email,
       'photoUrl': photoUrl ?? user.photoURL ?? '',
       'bio': bio ?? '',
-      'role': 'member',
+      
       'joinedAt': FieldValue.serverTimestamp(),
       'classesAttended': 0,
     }, SetOptions(merge: true));

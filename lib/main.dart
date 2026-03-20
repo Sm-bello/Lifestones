@@ -5044,6 +5044,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     width: double.infinity,
                     child: OutlinedButton(
                       onPressed: () async {
+                        final uid = FirebaseAuth.instance.currentUser?.uid;
+                        if (uid != null) {
+                          await FirebaseFirestore.instance.collection('users').doc(uid).update({
+                            'role': FieldValue.delete(),
+                            'roleSetAt': FieldValue.delete(),
+                            'chatApproved': false,
+                          });
+                        }
                         await signOut();
                         if (context.mounted) {
                           Navigator.of(context).pushAndRemoveUntil(
