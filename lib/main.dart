@@ -4752,7 +4752,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 height: 1.5)),
                         const SizedBox(height: 10),
                         TextField(
-                          onChanged: (v) {},
+                          onFieldSubmitted: (v) { FirebaseFirestore.instance.collection('users').doc(_user!.uid).update({'phone': v}); },
                           decoration: InputDecoration(
                             hintText: 'Phone number (optional)',
                             prefixText: '+',
@@ -4891,7 +4891,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       fontWeight: FontWeight.w700,
                                       color: kText)),
                                   Text(count > 0
-                                    ? '\$count awaiting approval'
+                                    ? '$count awaiting approval'
                                     : 'No pending requests',
                                     style: TextStyle(fontSize: 12,
                                       color: count > 0
@@ -4918,9 +4918,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   _buildTile(Icons.notifications_outlined,
                     'Class Reminders', 'Fri, Sat, Sun · 30 min before'),
-                  _buildTile(Icons.info_outline,
-                    'About Lifestones',
-                    'Version 1.0.0 · Built with ❤️ for the family'),
+                  GestureDetector(
+                    onTap: () {
+                      showDialog(context: context, builder: (ctx) => AlertDialog(
+                        backgroundColor: kMilkDeep,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        title: const Text('Welcome to the Sanctuary', style: TextStyle(fontWeight: FontWeight.w800, color: kText)),
+                        content: const Text('This app is a dedicated space for the Lifestones family to grow in Faith, Community, and Discipleship.
+
+When the Sanctuary is LIVE, simply tap to listen in. Keep your microphone muted unless called upon, and prepare your heart for the Word.', style: TextStyle(height: 1.5, color: kText)),
+                        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close', style: TextStyle(color: kGold)))]
+                      ));
+                    },
+                    child: _buildTile(Icons.info_outline, 'About Lifestones', 'Tap to read our guidelines'),
+                  ),
                   const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
