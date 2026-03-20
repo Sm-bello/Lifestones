@@ -2109,60 +2109,49 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
 
   Future<void> _endMeetingAndRecord(String roomCode) async {
     final user = FirebaseAuth.instance.currentUser;
-    // Stop recording and upload to Firebase Storage
     try {
-      if (_isRecording) {
+      if (_isRecording && _recorder != null) {
         final path = await _recorder!.stopRecorder();
-        setState(() => _isRecording = false);
-        if (path != null && path.isNotEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Uploading recording...'),
-              duration: Duration(seconds: 2)));
-          await FirebaseService.saveRecording(
-            localPath: path,
-            roomCode: roomCode,
-            topic: 'Lifestones Class',
-            starterUid: user?.uid ?? '',
-            starterName: user?.displayName ?? 'Pastor',
-          );
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Recording saved to Past Recordings'),
-                backgroundColor: kGreen));
-          }
-        }
-      }
-    } catch (e) {
-      debugPrint('Recording upload error: \$e');
-    }
-    // Stop recording and upload
-    try {
-      if (_isRecording) {
-        final path = await _recorder?.stopRecorder();
+        await _recorder!.closeRecorder();
         setState(() => _isRecording = false);
         if (path != null && path.isNotEmpty) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Uploading recording...')));
           }
-          await FirebaseService.saveRecording(
-            localPath: path,
-            roomCode: roomCode,
-            topic: _currentTopic ?? 'Lifestones Class',
-            starterUid: _user?.uid ?? '',
-            starterName: _user?.displayName ?? 'Pastor',
-          );
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Recording saved!'),
-                backgroundColor: kGreen));
+          // Upload directly without saveRecording service
+          final file = File(path);
+          if (await file.exists()) {
+            final ref = FirebaseStorage.instance
+              .ref('recordings/$roomCode/${DateTime.now().millisecondsSinceEpoch}.aac');
+            final uploadTask = await ref.putFile(file);
+            final downloadUrl = await uploadTask.ref.getDownloadURL();
+            await FirebaseFirestore.instance.collection('recordings').add({
+              'roomCode': roomCode,
+              'downloadUrl': downloadUrl,
+              'title': _currentTopic ?? 'Lifestones Class',
+              'uploadedBy': user?.displayName ?? 'Pastor',
+              'uploadedAt': FieldValue.serverTimestamp(),
+              'endedAt': FieldValue.serverTimestamp(),
+              'summary': '',
+            });
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('✅ Recording saved to Past Recordings!'),
+                  backgroundColor: kGreen,
+                  duration: Duration(seconds: 4)));
+            }
           }
         }
       }
-    } catch (e) { debugPrint('Recording error: \$e'); }
+    } catch (e) {
+      debugPrint('Recording upload error: \$e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Recording error: \$e')));
+      }
+    }
     await FirebaseService.endMeeting(roomCode);
   }
 
