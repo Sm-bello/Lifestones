@@ -786,7 +786,17 @@ class _MainShellState extends State<MainShell> {
             BottomNavigationBarItem(
               icon: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseService.getMessages(),
-                builder: (ctx, snap) {
+                                builder: (ctx, snap) {
+                  // If there is data, and we are NOT currently on the Chat tab (_tab == 3)
+                  final hasUnread = snap.hasData && snap.data!.docs.isNotEmpty && _tab != 3;
+                  
+                  if (hasUnread) {
+                    return const Badge(
+                      backgroundColor: Colors.red,
+                      smallSize: 9,
+                      child: Icon(Icons.chat_bubble_outline),
+                    );
+                  }
                   return const Icon(Icons.chat_bubble_outline);
                 },
               ),
