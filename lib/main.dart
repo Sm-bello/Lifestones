@@ -3918,7 +3918,10 @@ class _BibleScreenState extends State<BibleScreen> {
                                 color: kGoldDark))),
                           const SizedBox(height: 16),
                           if (_verses.isNotEmpty)
-                            ..._verses.map((v) => Padding(
+                            ..._verses.map((v) {
+                            final verseNum = v['verse'] as int;
+                            final verseText = v['text'] as String;
+                            return Padding(
                               padding: const EdgeInsets.only(bottom: 14),
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -3926,7 +3929,7 @@ class _BibleScreenState extends State<BibleScreen> {
                                   SizedBox(
                                     width: 28,
                                     child: Text(
-                                      '\${(v['verse'] as int).toString()}',
+                                      verseNum.toString(),
                                       style: const TextStyle(
                                         fontSize: 11,
                                         color: kGold,
@@ -3934,12 +3937,13 @@ class _BibleScreenState extends State<BibleScreen> {
                                         height: 2.2))),
                                   Expanded(
                                     child: Text(
-                                      v['text'] as String,
+                                      verseText,
                                       style: const TextStyle(
                                         fontSize: 17,
                                         height: 1.7,
                                         color: kText))),
-                                ])))
+                                ]));
+                          })
                           else
                             Text(_passageText,
                               style: const TextStyle(
