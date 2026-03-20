@@ -676,6 +676,53 @@ class _MainShellState extends State<MainShell> {
     ProfileScreen(),
   ];
 
+  Widget _buildChatIcon(bool active) {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return Icon(active
+      ? Icons.chat_bubble : Icons.chat_bubble_outline);
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+        .collection('users').doc(uid).snapshots(),
+      builder: (ctx, userSnap) {
+        final userData = userSnap.data?.data() as Map<String,dynamic>?;
+        final lastSeen = userData?['lastSeenChat'] as Timestamp?;
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+            .collection('messages')
+            .orderBy('sentAt', descending: true)
+            .limit(1).snapshots(),
+          builder: (ctx2, msgSnap) {
+            bool hasUnread = false;
+            if (msgSnap.hasData && msgSnap.data!.docs.isNotEmpty) {
+              final m = msgSnap.data!.docs.first.data()
+                as Map<String,dynamic>;
+              final mt = m['sentAt'] as Timestamp?;
+              final sender = m['senderUid'] as String?;
+              if (mt != null && sender != uid) {
+                if (lastSeen == null ||
+                  mt.seconds > lastSeen.seconds) {
+                  hasUnread = true;
+                }
+              }
+            }
+            return Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(active
+                  ? Icons.chat_bubble
+                  : Icons.chat_bubble_outline),
+                if (hasUnread) Positioned(
+                  right: -3, top: -3,
+                  child: Container(
+                    width: 10, height: 10,
+                    decoration: const BoxDecoration(
+                      color: kRed,
+                      shape: BoxShape.circle))),
+              ]);
+          });
+      });
+  }
+
   Widget? _buildResourcesFAB(BuildContext context) {
     if (_tab != 0) return null;
     return Column(
@@ -1995,15 +2042,22 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
           .collection('meetings').doc('current_live').get();
         final meetData = meetDoc.data();
         if (meetData != null) {
-          await FirebaseFirestore.instance
-            .collection('attendance').add({
-              'uid': _user?.uid,
+          final attRoom = meetData['roomCode'] ?? roomCode;
+          final attUid = _user?.uid ?? 'unknown';
+          final attDocId = '\${attRoom}_\$attUid';
+          final attRef = FirebaseFirestore.instance
+            .collection('attendance').doc(attDocId);
+          final attSnap = await attRef.get();
+          if (!attSnap.exists) {
+            await attRef.set({
+              'uid': attUid,
               'name': _user?.displayName ?? 'Member',
-              'roomCode': meetData['roomCode'] ?? roomCode,
+              'roomCode': attRoom,
               'topic': meetData['topic'] ?? 'Lifestones Class',
               'joinedAt': FieldValue.serverTimestamp(),
               'role': role,
             });
+          }
         }
       } catch (e) { debugPrint('Attendance error: \$e'); }
 
@@ -2040,10 +2094,13 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
 
   void _shareLink(String roomCode) {
     final link = 'https://sm-bello.github.io/Lifestones/?room=\$roomCode';
-    final message = "🔴 LIVE NOW: The Lifestones Sanctuary is open. You don't need to download anything, just come with a hungry spirit. Tap the link below to step in, listen to the Word, and be blessed right now:
-
-$link";
-    Share.share(message, subject: '⛪ Join Lifestones Class LIVE');
+    final msg = '🔴 A Lifestones class is LIVE right now.\n\n'
+      'You do not need to download anything. '
+      'Just tap the link below, come with a hungry spirit, '
+      'and be blessed by the Word of God:\n\n'
+      '\$link\n\n'
+      '"Where iron sharpens iron" — Proverbs 27:17 🙏';
+    Share.share(msg, subject: '⛪ Join Lifestones Class LIVE');
   }
 
   @override
@@ -4752,7 +4809,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 height: 1.5)),
                         const SizedBox(height: 10),
                         TextField(
-                          onFieldSubmitted: (v) { FirebaseFirestore.instance.collection('users').doc(_user!.uid).update({'phone': v}); },
+                          onChanged: (v) {},
                           decoration: InputDecoration(
                             hintText: 'Phone number (optional)',
                             prefixText: '+',
@@ -4924,9 +4981,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         backgroundColor: kMilkDeep,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                         title: const Text('Welcome to the Sanctuary', style: TextStyle(fontWeight: FontWeight.w800, color: kText)),
-                        content: const Text('This app is a dedicated space for the Lifestones family to grow in Faith, Community, and Discipleship.
-
-When the Sanctuary is LIVE, simply tap to listen in. Keep your microphone muted unless called upon, and prepare your heart for the Word.', style: TextStyle(height: 1.5, color: kText)),
+                        content: const Text(
+                          'This app is a dedicated space for the '
+                          'Lifestones family to grow in Faith, Community, '
+                          'and Discipleship.\n\nWhen the Sanctuary is '
+                          'LIVE, tap to listen in. Keep your microphone '
+                          'muted unless called upon, and prepare your '
+                          'heart for the Word.',
+                          style: TextStyle(height: 1.6, color: kText)),
                         actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close', style: TextStyle(color: kGold)))]
                       ));
                     },
