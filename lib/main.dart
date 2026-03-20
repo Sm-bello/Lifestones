@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_windowmanager/flutter_windowmanager.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -887,6 +888,28 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   void initState() {
     super.initState();
     _startAutoScroll();
+    _applyScreenSecurity();
+  }
+
+  Future<void> _applyScreenSecurity() async {
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) return;
+      final doc = await FirebaseFirestore.instance
+        .collection('users').doc(uid).get();
+      final role = doc.data()?['role'] ?? 'member';
+      if (role == 'pastor') {
+        // Pastors can screenshot
+        await FlutterWindowManager.clearFlags(
+          FlutterWindowManager.FLAG_SECURE);
+      } else {
+        // Members cannot screenshot or screen record
+        await FlutterWindowManager.addFlags(
+          FlutterWindowManager.FLAG_SECURE);
+      }
+    } catch (e) {
+      debugPrint('Screen security error: \$e');
+    }
   }
 
   void _startAutoScroll() {
