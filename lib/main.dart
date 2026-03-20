@@ -3926,7 +3926,7 @@ class _BibleScreenState extends State<BibleScreen> {
                                   SizedBox(
                                     width: 28,
                                     child: Text(
-                                      '\${v['verse']}',
+                                      '\${(v['verse'] as int).toString()}',
                                       style: const TextStyle(
                                         fontSize: 11,
                                         color: kGold,
