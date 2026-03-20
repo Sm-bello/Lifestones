@@ -1,199 +1,328 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lifestones Church — Join Live</title>
-  <meta property="og:title" content="Lifestones Church is LIVE">
-  <meta property="og:description" content="Join the live discipleship class now">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: Georgia, serif;
-      background: linear-gradient(135deg, #FDF6E3 0%, #F0E6CC 100%);
-      min-height: 100vh;
-      display: flex; flex-direction: column;
-      align-items: center; padding: 24px 20px;
-    }
-    .logo-circle {
-      width: 80px; height: 80px; border-radius: 50%;
-      background: linear-gradient(135deg, #E2B96F, #C9973A);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 36px;
-      box-shadow: 0 8px 32px rgba(201,151,58,0.4);
-      margin-bottom: 12px;
-    }
-    h1 { font-size: 28px; font-weight: 900; color: #C9973A; margin-bottom: 4px; }
-    .tagline { font-size: 11px; letter-spacing: 3px; color: rgba(139,105,20,0.6); margin-bottom: 32px; }
-    .live-card {
-      width: 100%; max-width: 420px;
-      background: linear-gradient(135deg, #C9973A, #A07828);
-      border-radius: 24px; padding: 24px; margin-bottom: 16px;
-      box-shadow: 0 12px 40px rgba(255,215,0,0.35);
-      display: none;
-      animation: pulse 2s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%,100% { box-shadow: 0 12px 40px rgba(255,215,0,0.35); }
-      50% { box-shadow: 0 12px 60px rgba(255,215,0,0.6); }
-    }
-    .live-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: #D32F2F; color: white;
-      padding: 4px 10px; border-radius: 20px;
-      font-size: 11px; font-weight: 900; letter-spacing: 1px; margin-bottom: 12px;
-    }
-    .live-dot {
-      width: 6px; height: 6px; background: white; border-radius: 50%;
-      animation: blink 1s infinite;
-    }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-    .class-title { color: white; font-size: 22px; font-weight: 900; margin-bottom: 4px; }
-    .class-sub { color: rgba(255,255,255,0.8); font-size: 13px; margin-bottom: 20px; }
-    .btn-join {
-      display: block; width: 100%; background: white; color: #C9973A;
-      text-align: center; padding: 16px; border-radius: 14px;
-      font-size: 16px; font-weight: 900; text-decoration: none;
-    }
-    .offline-card {
-      width: 100%; max-width: 420px; background: white;
-      border-radius: 24px; padding: 32px 24px; text-align: center;
-      margin-bottom: 16px; box-shadow: 0 4px 20px rgba(201,151,58,0.12); display: none;
-    }
-    .offline-card .icon { font-size: 48px; margin-bottom: 12px; }
-    .offline-card h2 { font-size: 20px; color: #2C1A00; margin-bottom: 8px; }
-    .offline-card p { font-size: 13px; color: rgba(139,105,20,0.7); line-height: 1.6; }
-    .loading { width: 100%; max-width: 420px; text-align: center; padding: 40px; }
-    .spinner {
-      width: 40px; height: 40px;
-      border: 3px solid rgba(201,151,58,0.2); border-top-color: #C9973A;
-      border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .download-section {
-      width: 100%; max-width: 420px; background: white;
-      border-radius: 20px; padding: 20px;
-      box-shadow: 0 4px 20px rgba(201,151,58,0.12);
-      border: 1px solid rgba(201,151,58,0.15);
-    }
-    .download-section h3 { font-size: 15px; color: #2C1A00; margin-bottom: 4px; font-weight: 800; }
-    .download-section p { font-size: 12px; color: rgba(139,105,20,0.6); margin-bottom: 14px; }
-    .btn-download {
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      width: 100%; background: #C9973A; color: white;
-      padding: 14px; border-radius: 12px;
-      font-size: 15px; font-weight: 800; text-decoration: none; margin-bottom: 8px;
-    }
-    .btn-download-alt {
-      display: block; width: 100%; text-align: center;
-      color: rgba(139,105,20,0.6); font-size: 12px; padding: 8px;
-      text-decoration: underline; cursor: pointer; background: none; border: none;
-    }
-    .alt-downloads { display: none; gap: 8px; margin-top: 8px; flex-direction: column; }
-    .alt-downloads.show { display: flex; }
-    .btn-alt {
-      display: block; padding: 10px;
-      border: 1px solid rgba(201,151,58,0.3); border-radius: 10px;
-      text-align: center; font-size: 12px; color: #8B6914; text-decoration: none; font-weight: 600;
-    }
-    .verse { margin-top: 24px; font-size: 12px; color: rgba(139,105,20,0.5); font-style: italic; text-align: center; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lifestones — Live Class</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #F5EFE6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .logo { font-size: 48px; margin-bottom: 8px; }
+  .app-name {
+    font-size: 28px;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+  }
+  .tagline {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 32px;
+  }
+  .card {
+    background: white;
+    border-radius: 24px;
+    padding: 28px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+    margin-bottom: 16px;
+  }
+  .live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+  .live-dot {
+    width: 8px; height: 8px;
+    background: #4caf50;
+    border-radius: 50%;
+    animation: pulse 1.2s infinite;
+  }
+  .scheduled-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff8e1;
+    color: #f57f17;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+  .offline-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fce4ec;
+    color: #c62828;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.3); }
+  }
+  .topic {
+    font-size: 22px;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin-bottom: 8px;
+  }
+  .meta {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 20px;
+  }
+  .countdown-box {
+    background: #F5EFE6;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .countdown-label {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .countdown-time {
+    font-size: 36px;
+    font-weight: 800;
+    color: #C9A84C;
+    letter-spacing: 2px;
+    font-variant-numeric: tabular-nums;
+  }
+  .countdown-sub {
+    font-size: 12px;
+    color: #aaa;
+    margin-top: 4px;
+  }
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    border-radius: 14px;
+    border: none;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    margin-bottom: 10px;
+    transition: opacity 0.2s;
+  }
+  .btn:active { opacity: 0.8; }
+  .btn-gold { background: #C9A84C; color: white; }
+  .btn-outline {
+    background: transparent;
+    border: 2px solid #C9A84C;
+    color: #C9A84C;
+  }
+  .btn-green { background: #4caf50; color: white; }
+  .btn-calendar { background: #1a73e8; color: white; }
+  .divider {
+    text-align: center;
+    color: #ccc;
+    font-size: 12px;
+    margin: 16px 0;
+  }
+  .verse {
+    font-size: 13px;
+    color: #aaa;
+    text-align: center;
+    font-style: italic;
+    margin-top: 8px;
+  }
+  .hidden { display: none; }
+</style>
 </head>
 <body>
-  <div class="logo-circle">&#10013;</div>
-  <h1>Lifestones</h1>
-  <p class="tagline">DISCIPLESHIP &middot; COMMUNITY &middot; FAITH</p>
 
-  <div class="loading" id="loading">
-    <div class="spinner"></div>
-    <p style="color:rgba(139,105,20,0.6);font-size:14px;">Checking live status...</p>
+<div class="logo">⛪</div>
+<div class="app-name">Lifestones</div>
+<div class="tagline">Faith · Community · Discipleship</div>
+
+<!-- LIVE CARD -->
+<div class="card hidden" id="liveCard">
+  <div class="live-badge"><div class="live-dot"></div> LIVE NOW</div>
+  <div class="topic" id="liveTopic">Class in Progress</div>
+  <div class="meta" id="liveMeta">Join from your browser — no download needed</div>
+  <a class="btn btn-green" id="joinBtn" href="#">🎧 Listen Live in Browser</a>
+  <div class="divider">— or —</div>
+  <a class="btn btn-gold" id="downloadBtn" href="#">📱 Download Lifestones App</a>
+  <div class="verse">"Where iron sharpens iron" — Proverbs 27:17</div>
+</div>
+
+<!-- SCHEDULED CARD -->
+<div class="card hidden" id="scheduledCard">
+  <div class="scheduled-badge">⏰ Upcoming Class</div>
+  <div class="topic" id="scheduledTopic">Lifestones Class</div>
+  <div class="meta" id="scheduledMeta"></div>
+  <div class="countdown-box">
+    <div class="countdown-label">Class starts in</div>
+    <div class="countdown-time" id="countdownTime">--:--:--</div>
+    <div class="countdown-sub" id="countdownDate"></div>
   </div>
+  <button class="btn btn-calendar" onclick="addToGoogleCalendar()">📅 Add to Google Calendar</button>
+  <button class="btn btn-outline" onclick="setReminder()">⏰ Set Phone Reminder</button>
+  <div class="divider">— get the full experience —</div>
+  <a class="btn btn-gold" id="downloadBtn2" href="#">📱 Download Lifestones App</a>
+  <div class="verse">"Do not forsake assembling together" — Hebrews 10:25</div>
+</div>
 
-  <div class="live-card" id="liveCard">
-    <div class="live-badge"><div class="live-dot"></div>LIVE</div>
-    <div class="class-title" id="classTitle">Lifestones Class</div>
-    <div class="class-sub" id="classSub">Started by Pastor</div>
-    <a class="btn-join" id="joinBtn" href="#" target="_blank">&#127911; Listen Live in Browser</a>
-  </div>
+<!-- OFFLINE CARD -->
+<div class="card hidden" id="offlineCard">
+  <div class="offline-badge">😴 No Class Right Now</div>
+  <div class="topic">Check Back Soon</div>
+  <div class="meta">Classes hold every Friday, Saturday & Sunday at 6:00 PM</div>
+  <a class="btn btn-gold" id="downloadBtn3" href="#">📱 Download Lifestones App</a>
+  <div class="verse">"Where iron sharpens iron" — Proverbs 27:17</div>
+</div>
 
-  <div class="offline-card" id="offlineCard">
-    <div class="icon">&#9962;</div>
-    <h2>No Class Right Now</h2>
-    <p>Check back during class time.<br>Friday, Saturday &amp; Sunday at 6:00 PM</p>
-  </div>
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+  import { getFirestore, doc, getDoc, collection, query, where, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-  <div class="download-section">
-    <h3>&#128242; Get the Lifestones App</h3>
-    <p>Join classes, chat, pray together and access past recordings.</p>
-    <a class="btn-download" id="mainDownload" href="#">&#11015; Download Lifestones App</a>
-    <button class="btn-download-alt" onclick="toggleAlt()">Wrong phone? See all versions</button>
-    <div class="alt-downloads" id="altDownloads">
-      <a class="btn-alt" id="arm64Link" href="#">arm64-v8a (~64MB) &mdash; Most phones 2017+</a>
-      <a class="btn-alt" id="arm32Link" href="#">armeabi-v7a (~53MB) &mdash; Older phones</a>
-    </div>
-  </div>
+  const app = initializeApp({
+    apiKey: "AIzaSyCOr0PGvWhb869qfKL-1PgbnE4iWpV4ivQ",
+    authDomain: "lifestones-9119b.firebaseapp.com",
+    projectId: "lifestones-9119b",
+    storageBucket: "lifestones-9119b.firebasestorage.app",
+    messagingSenderId: "125428172963",
+    appId: "1:125428172963:android:3e244ed67c2c6524989716"
+  });
 
-  <p class="verse">"Where iron sharpens iron" &mdash; Proverbs 27:17</p>
+  const db = getFirestore(app);
+  const params = new URLSearchParams(window.location.search);
+  const roomCode = params.get('room');
+  const scheduledId = params.get('scheduled');
 
-  <script>
-    var RELEASES = 'https://github.com/Sm-bello/Lifestones/releases/latest/download';
-    var ARM64 = RELEASES + '/Lifestones-arm64-v8a.apk';
-    var ARM32 = RELEASES + '/Lifestones-armeabi-v7a.apk';
-    var FIREBASE = 'https://firestore.googleapis.com/v1/projects/lifestones-9119b/databases/(default)/documents/meetings/current_live';
+  // Detect device for smart APK link
+  const ua = navigator.userAgent;
+  const isArm64 = ua.includes('aarch64') || ua.includes('arm64');
+  const apkUrl = isArm64
+    ? 'https://github.com/Sm-bello/Lifestones/releases/latest/download/Lifestones-arm64-v8a.apk'
+    : 'https://github.com/Sm-bello/Lifestones/releases/latest/download/Lifestones-armeabi-v7a.apk';
 
-    function detectAPK() {
-      var ua = navigator.userAgent;
-      if (/arm64|aarch64|arm_64/i.test(ua)) return ARM64;
-      if (/armv7|arm_32|armeabi-v7/i.test(ua)) return ARM32;
-      var m = ua.match(/Android (\d+)/i);
-      if (m && parseInt(m[1]) < 8) return ARM32;
-      return ARM64;
+  document.querySelectorAll('[id^="downloadBtn"]').forEach(b => b.href = apkUrl);
+
+  let scheduledTime = null;
+  let countdownInterval = null;
+
+  function showCard(id) {
+    ['liveCard','scheduledCard','offlineCard'].forEach(c => {
+      document.getElementById(c).classList.add('hidden');
+    });
+    document.getElementById(id).classList.remove('hidden');
+  }
+
+  function startCountdown(targetDate) {
+    if (countdownInterval) clearInterval(countdownInterval);
+    const el = document.getElementById('countdownTime');
+    const datEl = document.getElementById('countdownDate');
+    scheduledTime = targetDate;
+
+    const options = { weekday:'long', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' };
+    datEl.textContent = targetDate.toLocaleDateString('en-US', options);
+
+    countdownInterval = setInterval(() => {
+      const now = new Date();
+      const diff = targetDate - now;
+      if (diff <= 0) {
+        clearInterval(countdownInterval);
+        el.textContent = 'Starting now!';
+        setTimeout(() => location.reload(), 5000);
+        return;
+      }
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      el.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }, 1000);
+  }
+
+  window.addToGoogleCalendar = function() {
+    if (!scheduledTime) return;
+    const end = new Date(scheduledTime.getTime() + 90 * 60000);
+    const fmt = d => d.toISOString().replace(/[-:]/g,'').split('.')[0] + 'Z';
+    const title = encodeURIComponent(document.getElementById('scheduledTopic').textContent);
+    const details = encodeURIComponent('Join on Lifestones App: ' + apkUrl);
+    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${fmt(scheduledTime)}/${fmt(end)}&details=${details}`;
+    window.open(url, '_blank');
+  }
+
+  window.setReminder = function() {
+    if (!scheduledTime) return;
+    const mins = Math.round((scheduledTime - new Date()) / 60000);
+    alert(`To set a reminder:\n\n1. Open your phone Clock app\n2. Set a timer for ${mins} minutes\n\nOr download the Lifestones app — it sends automatic notifications before every class! 🙏`);
+  }
+
+  async function checkStatus() {
+    try {
+      // 1. Check if class is currently live
+      const liveDoc = await getDoc(doc(db, 'meetings', 'current_live'));
+      if (liveDoc.exists() && liveDoc.data().isLive === true) {
+        const data = liveDoc.data();
+        document.getElementById('liveTopic').textContent = data.topic || 'Class in Progress';
+        document.getElementById('liveMeta').textContent = `Started by ${data.starterName || 'Pastor'} · Join now`;
+        const room = data.roomCode || roomCode;
+        document.getElementById('joinBtn').href = `https://meet.ffmuc.net/${room}`;
+        showCard('liveCard');
+        return;
+      }
+
+      // 2. Check for upcoming scheduled class
+      const now = new Date();
+      const q = query(
+        collection(db, 'scheduled_meetings'),
+        where('scheduledAt', '>', now),
+        orderBy('scheduledAt'),
+        limit(1)
+      );
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        const data = snap.docs[0].data();
+        const scheduledAt = data.scheduledAt.toDate();
+        document.getElementById('scheduledTopic').textContent = data.topic || 'Lifestones Class';
+        document.getElementById('scheduledMeta').textContent = `Hosted by ${data.createdBy || 'Pastor'} · Be there!`;
+        showCard('scheduledCard');
+        startCountdown(scheduledAt);
+        return;
+      }
+
+      // 3. No class - show offline
+      showCard('offlineCard');
+
+    } catch(e) {
+      console.error(e);
+      showCard('offlineCard');
     }
+  }
 
-    function toggleAlt() {
-      document.getElementById('altDownloads').classList.toggle('show');
-    }
-
-    var best = detectAPK();
-    document.getElementById('mainDownload').href = best;
-    document.getElementById('arm64Link').href = ARM64;
-    document.getElementById('arm32Link').href = ARM32;
-    document.getElementById('mainDownload').innerHTML =
-      '&#11015; Download for Your Phone (' + (best === ARM64 ? 'arm64' : 'arm32') + ')';
-
-    var params = new URLSearchParams(window.location.search);
-    var room = params.get('room');
-
-    if (room) {
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('liveCard').style.display = 'block';
-      document.getElementById('classTitle').textContent = 'Lifestones Class';
-      document.getElementById('classSub').textContent = 'Tap below to join the live session';
-      document.getElementById('joinBtn').href = 'https://meet.ffmuc.net/Lifestones-' + room;
-    } else {
-      fetch(FIREBASE)
-        .then(function(r){ return r.json(); })
-        .then(function(data) {
-          document.getElementById('loading').style.display = 'none';
-          var f = data.fields;
-          var live = f && f.isLive && f.isLive.booleanValue === true;
-          if (live) {
-            var topic = f.topic ? f.topic.stringValue : 'Lifestones Class';
-            var starter = f.starterName ? f.starterName.stringValue : 'Pastor';
-            var code = f.roomCode ? f.roomCode.stringValue : '';
-            document.getElementById('liveCard').style.display = 'block';
-            document.getElementById('classTitle').textContent = topic;
-            document.getElementById('classSub').textContent = 'Started by ' + starter;
-            document.getElementById('joinBtn').href = 'https://meet.ffmuc.net/Lifestones-' + code;
-          } else {
-            document.getElementById('offlineCard').style.display = 'block';
-          }
-        })
-        .catch(function() {
-          document.getElementById('loading').style.display = 'none';
-          document.getElementById('offlineCard').style.display = 'block';
-        });
-    }
-  </script>
+  checkStatus();
+</script>
 </body>
 </html>

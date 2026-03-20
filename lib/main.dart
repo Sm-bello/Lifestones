@@ -1135,7 +1135,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                   fontWeight: FontWeight.w800, color: kText)),
               const Spacer(),
               StreamBuilder<QuerySnapshot>(
-                stream: FirebaseService.getLiveMeetings(),
+                stream: FirebaseService.getUpcomingMeetings(),
                 builder: (ctx, snap) {
                   if (snap.hasData && snap.data!.docs.isNotEmpty) {
                     return Container(
