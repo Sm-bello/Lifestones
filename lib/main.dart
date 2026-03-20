@@ -470,7 +470,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
       if (uid != null) {
         await FirebaseFirestore.instance
           .collection('users').doc(uid).set({
-            'role': role,
+            'role': role, 'chatApproved': true,
             'chatApproved': role == 'pastor',
             'roleSetAt': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
@@ -2053,7 +2053,7 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
               'roomCode': attRoom,
               'topic': meetData['topic'] ?? 'Lifestones Class',
               'joinedAt': FieldValue.serverTimestamp(),
-              'role': role,
+              'role': role, 'chatApproved': true,
             });
           }
         }
