@@ -2121,12 +2121,12 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
   }
 
   void _shareLink(String roomCode) {
-    final link = 'https://sm-bello.github.io/Lifestones/?room=\$roomCode';
+    final link = 'https://sm-bello.github.io/Lifestones/?room=${roomCode}';
     final msg = '🔴 A Lifestones class is LIVE right now.\n\n'
       'You do not need to download anything. '
       'Just tap the link below, come with a hungry spirit, '
       'and be blessed by the Word of God:\n\n'
-      '\$link\n\n'
+      '${link}\n\n'
       '"Where iron sharpens iron" — Proverbs 27:17 🙏';
     Share.share(msg, subject: '⛪ Join Lifestones Class LIVE');
   }
