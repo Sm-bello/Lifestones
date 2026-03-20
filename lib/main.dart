@@ -4993,7 +4993,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close', style: TextStyle(color: kGold)))]
                       ));
                     },
-                    child: _buildTile(Icons.info_outline, 'About Lifestones', 'Tap to read our guidelines'),
+                    child: GestureDetector(
+                    onTap: () => showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        backgroundColor: kMilkDeep,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20)),
+                        title: const Text('Welcome to the Sanctuary',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800, color: kText)),
+                        content: const Text(
+                          'This app is a dedicated space for the '
+                          'Lifestones family to grow in Faith, '
+                          'Community, and Discipleship.
+
+'
+                          'When the Sanctuary is LIVE, tap to listen. '
+                          'Keep your microphone muted unless called upon '
+                          'and prepare your heart for the Word.',
+                          style: TextStyle(height: 1.6, color: kText)),
+                        actions: [TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('Amen 🙏',
+                            style: TextStyle(
+                              color: kGold,
+                              fontWeight: FontWeight.w700)))],
+                      )),
+                    child: _buildTile(Icons.info_outline,
+                      'About Lifestones', 'Tap to read our guidelines')),
                   ),
                   const SizedBox(height: 24),
                   SizedBox(
