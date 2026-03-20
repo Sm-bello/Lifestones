@@ -2739,13 +2739,9 @@ class _MembersScreenState extends State<MembersScreen> {
                               onDismissed: (_) async {
                                 // Remove roleSetAt so they must re-select role
                                 // First set banned flag
+                              // Delete entirely from database
                               await FirebaseFirestore.instance
-                                  .collection('users').doc(uid).update({
-                                    'banned': true,
-                                    'chatApproved': false,
-                                    'roleSetAt': FieldValue.delete(),
-                                    'role': FieldValue.delete(),
-                                  });
+                                  .collection('users').doc(uid).delete();
                                 if (ctx.mounted) {
                                   ScaffoldMessenger.of(ctx).showSnackBar(
                                     SnackBar(
