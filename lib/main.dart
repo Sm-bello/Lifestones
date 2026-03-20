@@ -3740,10 +3740,13 @@ class _BibleScreenState extends State<BibleScreen> {
           final chapters = bookData['chapters'] as List<dynamic>;
           if (_selectedChapter > 0 && _selectedChapter <= chapters.length) {
             final verses = chapters[_selectedChapter - 1] as List<dynamic>;
-            // Join verses with newlines to perfectly match the UI expectations
             setState(() {
-               _passageText = verses.join('\n');
-               _errorText = '';
+              _verses = verses.asMap().entries.map((e) => {
+                'verse': e.key + 1,
+                'text': e.value.toString().trim(),
+              }).toList();
+              _passageText = 'loaded';
+              _errorText = '';
             });
           } else {
             setState(() => _errorText = 'Chapter not found.');
