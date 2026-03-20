@@ -1436,36 +1436,36 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   Widget _buildBiblePlanLayer() {
     // 365-day plan — never repeats within a year
     final List<Map<String,dynamic>> fullPlan = [
-      {'book':'Genesis','ch':[1,2],'theme':'Creation','summary':'God speaks the universe into existence and forms mankind in His image. The seventh day is declared holy — a pattern of rest woven into creation.'},
-      {'book':'Genesis','ch':[3,4],'theme':'The Fall','summary':'Temptation leads to disobedience and sin enters the world. The first murder follows as Cain kills his brother Abel out of jealousy.'},
-      {'book':'Genesis','ch':[6,7],'theme':'The Flood','summary':'God sees the wickedness of man and decides to cleanse the earth. Noah — a righteous man — is chosen to build the ark and preserve life.'},
-      {'book':'Genesis','ch':[12,13],'theme':'Abraham Called','summary':'God calls Abram out of his homeland and makes an extraordinary promise — to make him a great nation and bless all families of the earth through him.'},
-      {'book':'Genesis','ch':[22],'theme':'The Ultimate Test','summary':'God tests Abraham by asking him to sacrifice Isaac. Abraham obeys fully and God provides a ram as a substitute — a foreshadowing of Christ.'},
-      {'book':'Exodus','ch':[1,2],'theme':'Moses Born','summary':'Israel is enslaved in Egypt. Moses is born, hidden in a basket, and raised in Pharaoh\'s palace — prepared by God for a mission he doesn\'t yet know.'},
-      {'book':'Exodus','ch':[3,4],'theme':'The Burning Bush','summary':'God appears to Moses in a burning bush and calls him to deliver Israel from slavery. Moses hesitates but God reassures him — I AM has sent you.'},
-      {'book':'Exodus','ch':[12,14],'theme':'Passover & Exodus','summary':'The final plague strikes Egypt. The blood of a lamb protects Israel. Pharaoh releases them, then pursues — only to see the Red Sea swallow his army.'},
-      {'book':'Psalm','ch':[1],'theme':'The Blessed Man','summary':'The man who meditates on God\'s word day and night is like a tree planted by rivers — bearing fruit in every season. The wicked are like chaff blown away.'},
-      {'book':'Psalm','ch':[23],'theme':'The Good Shepherd','summary':'The Lord is my shepherd — I shall not want. Through green pastures, dark valleys, and the presence of enemies, God\'s goodness and mercy follow all our days.'},
-      {'book':'Psalm','ch':[51],'theme':'Repentance','summary':'David cries out after his sin — create in me a clean heart, O God. Restore to me the joy of your salvation. God desires a broken and contrite heart.'},
-      {'book':'Psalm','ch':[91],'theme':'Divine Protection','summary':'He who dwells in the shelter of the Most High rests in His shadow. A thousand may fall at your side but it shall not come near you — His angels guard you.'},
-      {'book':'Psalm','ch':[139],'theme':'Known by God','summary':'You formed my inward parts and knit me together in my mother\'s womb. God knows every thought, every word, every step — and His thoughts toward us are precious.'},
-      {'book':'Proverbs','ch':[1],'theme':'Wisdom\'s Call','summary':'The fear of the Lord is the beginning of wisdom. Wisdom calls out in the streets but fools despise her. Choose wisdom and she will protect and honor you.'},
-      {'book':'Proverbs','ch':[3],'theme':'Trust the Lord','summary':'Trust in the Lord with all your heart and lean not on your own understanding. In all your ways acknowledge Him and He shall direct your paths.'},
-      {'book':'Isaiah','ch':[40],'theme':'God\'s Greatness','summary':'Who has measured the waters in the hollow of His hand? Those who wait upon the Lord shall renew their strength — they shall mount up with wings like eagles.'},
-      {'book':'Isaiah','ch':[53],'theme':'The Suffering Servant','summary':'He was pierced for our transgressions and crushed for our iniquities. The punishment that brought us peace was upon Him — a prophecy of Christ\'s death 700 years before it happened.'},
-      {'book':'Matthew','ch':[1,2],'theme':'Birth of Jesus','summary':'Jesus is born of a virgin in Bethlehem. Wise men travel from the east following a star. Herod plots to destroy the child but God protects the Holy Family.'},
-      {'book':'Matthew','ch':[5,6],'theme':'Sermon on the Mount','summary':'Blessed are the poor in spirit. Blessed are the peacemakers. Jesus redefines righteousness — going beyond outward obedience to the transformation of the heart.'},
-      {'book':'Matthew','ch':[26,27],'theme':'The Crucifixion','summary':'Jesus is betrayed, arrested, tried, and crucified. The temple veil tears from top to bottom. The Son of God gives His life as a ransom for many.'},
-      {'book':'Matthew','ch':[28],'theme':'The Resurrection','summary':'He is not here — He has risen! Jesus appears to His disciples and commissions them — go into all the world and make disciples of all nations.'},
-      {'book':'John','ch':[1],'theme':'The Word Made Flesh','summary':'In the beginning was the Word and the Word was God. Jesus — the light of the world — takes on human flesh and dwells among us full of grace and truth.'},
-      {'book':'John','ch':[3],'theme':'Born Again','summary':'You must be born again. God so loved the world that He gave His only Son — whoever believes in Him shall not perish but have everlasting life.'},
-      {'book':'John','ch':[11],'theme':'Lazarus Raised','summary':'Jesus weeps at the tomb of Lazarus — the shortest verse in the Bible. Then He speaks and the dead man walks out. I am the resurrection and the life.'},
-      {'book':'John','ch':[14,15],'theme':'The Vine & Comforter','summary':'I am the way, the truth and the life. Jesus promises the Holy Spirit as a Comforter and calls His disciples to abide in Him as branches in the vine.'},
-      {'book':'Acts','ch':[1,2],'theme':'Pentecost','summary':'The Holy Spirit falls on the disciples like tongues of fire. Three thousand are saved in one day. The church is born and devoted themselves to the apostles' teaching.'},
-      {'book':'Romans','ch':[3,4],'theme':'Justification by Faith','summary':'All have sinned and fall short of the glory of God. But we are justified freely by His grace through faith — not by works, so no one can boast.'},
-      {'book':'Romans','ch':[8],'theme':'Life in the Spirit','summary':'There is no condemnation for those in Christ Jesus. The Spirit intercedes for us with groans too deep for words. Nothing in all creation can separate us from God\'s love.'},
-      {'book':'Ephesians','ch':[1,2],'theme':'Saved by Grace','summary':'By grace you have been saved through faith — this is not your own doing, it is the gift of God. We are His workmanship created in Christ Jesus for good works.'},
-      {'book':'Revelation','ch':[21,22],'theme':'New Creation','summary':'God will wipe every tear from their eyes. There will be no more death, mourning, or pain. The old order passes away — Behold, I make all things new.'},
+      {'book':'Genesis','ch':[1,2],'theme':'Creation','summary':"God speaks the universe into existence and forms mankind in His image. The seventh day is declared holy — a pattern of rest woven into creation."},
+      {'book':'Genesis','ch':[3,4],'theme':'The Fall','summary':"Temptation leads to disobedience and sin enters the world. The first murder follows as Cain kills his brother Abel out of jealousy."},
+      {'book':'Genesis','ch':[6,7],'theme':'The Flood','summary':"God sees the wickedness of man and decides to cleanse the earth. Noah — a righteous man — is chosen to build the ark and preserve life."},
+      {'book':'Genesis','ch':[12,13],'theme':'Abraham Called','summary':"God calls Abram out of his homeland and makes an extraordinary promise — to make him a great nation and bless all families of the earth."},
+      {'book':'Genesis','ch':[22],'theme':'The Ultimate Test','summary':"God tests Abraham by asking him to sacrifice Isaac. Abraham obeys fully and God provides a ram — a foreshadowing of Christ."},
+      {'book':'Exodus','ch':[1,2],'theme':'Moses Born','summary':"Israel is enslaved in Egypt. Moses is born, hidden in a basket, and raised in Pharaoh's palace — prepared by God for a mission he does not yet know."},
+      {'book':'Exodus','ch':[3,4],'theme':'The Burning Bush','summary':"God appears to Moses in a burning bush and calls him to deliver Israel. Moses hesitates but God reassures him — I AM has sent you."},
+      {'book':'Exodus','ch':[12,14],'theme':'Passover and Exodus','summary':"The final plague strikes Egypt. The blood of a lamb protects Israel. Pharaoh releases them, then pursues — only to see the Red Sea swallow his army."},
+      {'book':'Psalms','ch':[1],'theme':'The Blessed Man','summary':"The man who meditates on God's word day and night is like a tree planted by rivers — bearing fruit in every season. The wicked are like chaff blown away."},
+      {'book':'Psalms','ch':[23],'theme':'The Good Shepherd','summary':"The Lord is my shepherd — I shall not want. Through green pastures and dark valleys, God's goodness and mercy follow all our days."},
+      {'book':'Psalms','ch':[51],'theme':'Repentance','summary':"David cries out after his sin — create in me a clean heart, O God. Restore to me the joy of your salvation. God desires a broken and contrite heart."},
+      {'book':'Psalms','ch':[91],'theme':'Divine Protection','summary':"He who dwells in the shelter of the Most High rests in His shadow. A thousand may fall at your side but it shall not come near you."},
+      {'book':'Psalms','ch':[139],'theme':'Known by God','summary':"You formed my inward parts and knit me together in my mother's womb. God knows every thought, every word, every step — His thoughts toward us are precious."},
+      {'book':'Proverbs','ch':[1],'theme':'Wisdom Calls','summary':"The fear of the Lord is the beginning of wisdom. Wisdom calls out in the streets but fools despise her. Choose wisdom and she will protect and honor you."},
+      {'book':'Proverbs','ch':[3],'theme':'Trust the Lord','summary':"Trust in the Lord with all your heart and lean not on your own understanding. In all your ways acknowledge Him and He shall direct your paths."},
+      {'book':'Isaiah','ch':[40],'theme':"God's Greatness",'summary':"Who has measured the waters in the hollow of His hand? Those who wait upon the Lord shall renew their strength and mount up with wings like eagles."},
+      {'book':'Isaiah','ch':[53],'theme':'The Suffering Servant','summary':"He was pierced for our transgressions and crushed for our iniquities. The punishment that brought us peace was upon Him — 700 years before the cross."},
+      {'book':'Matthew','ch':[1,2],'theme':'Birth of Jesus','summary':"Jesus is born of a virgin in Bethlehem. Wise men travel from the east following a star. Herod plots to destroy the child but God protects the Holy Family."},
+      {'book':'Matthew','ch':[5,6],'theme':'Sermon on the Mount','summary':"Blessed are the poor in spirit. Blessed are the peacemakers. Jesus redefines righteousness — going beyond outward obedience to the heart."},
+      {'book':'Matthew','ch':[26,27],'theme':'The Crucifixion','summary':"Jesus is betrayed, arrested, tried, and crucified. The temple veil tears from top to bottom. The Son of God gives His life as a ransom for many."},
+      {'book':'Matthew','ch':[28],'theme':'The Resurrection','summary':"He is not here — He has risen! Jesus appears to His disciples and commissions them — go into all the world and make disciples of all nations."},
+      {'book':'John','ch':[1],'theme':'The Word Made Flesh','summary':"In the beginning was the Word and the Word was God. Jesus — the light of the world — takes on human flesh and dwells among us full of grace and truth."},
+      {'book':'John','ch':[3],'theme':'Born Again','summary':"You must be born again. God so loved the world that He gave His only Son — whoever believes in Him shall not perish but have everlasting life."},
+      {'book':'John','ch':[11],'theme':'Lazarus Raised','summary':"Jesus weeps at the tomb of Lazarus. Then He speaks and the dead man walks out. I am the resurrection and the life — whoever believes in me shall never die."},
+      {'book':'John','ch':[14,15],'theme':'The Vine and Comforter','summary':"I am the way, the truth and the life. Jesus promises the Holy Spirit as Comforter and calls His disciples to abide in Him as branches in the vine."},
+      {'book':'Acts','ch':[1,2],'theme':'Pentecost','summary':"The Holy Spirit falls on the disciples like tongues of fire. Three thousand are saved in one day. The church is born — devoted to the teaching of the apostles."},
+      {'book':'Romans','ch':[3,4],'theme':'Justified by Faith','summary':"All have sinned and fall short of the glory of God. But we are justified freely by His grace through faith — not by works, so no one can boast."},
+      {'book':'Romans','ch':[8],'theme':'Life in the Spirit','summary':"There is no condemnation for those in Christ Jesus. The Spirit intercedes for us. Nothing in all creation can separate us from the love of God."},
+      {'book':'Ephesians','ch':[1,2],'theme':'Saved by Grace','summary':"By grace you have been saved through faith — not your own doing, it is the gift of God. We are His workmanship created in Christ Jesus for good works."},
+      {'book':'Revelation','ch':[21,22],'theme':'New Creation','summary':"God will wipe every tear from their eyes. There will be no more death or pain. The old order passes away — Behold, I make all things new."},
     ];
 
     final dayOfYear = DateTime.now().difference(DateTime(DateTime.now().year, 1, 1)).inDays;
@@ -5246,6 +5246,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
 
 // ── BIBLE READING CONTENT WIDGET ─────────────────────────
+}
 class _BibleReadingContent extends StatefulWidget {
   final String bookName;
   final List chapters;
@@ -5256,7 +5257,6 @@ class _BibleReadingContent extends StatefulWidget {
     required this.summary});
   @override
   State<_BibleReadingContent> createState() => _BibleReadingContentState();
-}
 
 class _BibleReadingContentState extends State<_BibleReadingContent> {
   List<Map<String,dynamic>> _verses = [];
