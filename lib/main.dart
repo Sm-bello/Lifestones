@@ -2024,6 +2024,32 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
     } catch (e) {
       debugPrint('Recording upload error: \$e');
     }
+    // Stop recording and upload
+    try {
+      if (_isRecording) {
+        final path = await _recorder?.stopRecorder();
+        setState(() => _isRecording = false);
+        if (path != null && path.isNotEmpty) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Uploading recording...')));
+          }
+          await FirebaseService.saveRecording(
+            localPath: path,
+            roomCode: roomCode,
+            topic: _currentTopic ?? 'Lifestones Class',
+            starterUid: _user?.uid ?? '',
+            starterName: _user?.displayName ?? 'Pastor',
+          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Recording saved!'),
+                backgroundColor: kGreen));
+          }
+        }
+      }
+    } catch (e) { debugPrint('Recording error: \$e'); }
     await FirebaseService.endMeeting(roomCode);
   }
 
