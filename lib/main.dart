@@ -3917,9 +3917,33 @@ class _BibleScreenState extends State<BibleScreen> {
                                 fontSize: 13, fontWeight: FontWeight.w700,
                                 color: kGoldDark))),
                           const SizedBox(height: 16),
-                          Text(_passageText,
-                            style: const TextStyle(
-                              fontSize: 17, height: 2.0, color: kText)),
+                          if (_verses.isNotEmpty)
+                            ..._verses.map((v) => Padding(
+                              padding: const EdgeInsets.only(bottom: 14),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SizedBox(
+                                    width: 28,
+                                    child: Text(
+                                      '\${v['verse']}',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: kGold,
+                                        fontWeight: FontWeight.w800,
+                                        height: 2.2))),
+                                  Expanded(
+                                    child: Text(
+                                      v['text'] as String,
+                                      style: const TextStyle(
+                                        fontSize: 17,
+                                        height: 1.7,
+                                        color: kText))),
+                                ])))
+                          else
+                            Text(_passageText,
+                              style: const TextStyle(
+                                fontSize: 17, height: 2.0, color: kText)),
                         ],
                       ))),
           ],
