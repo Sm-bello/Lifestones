@@ -42,7 +42,9 @@ jobs:
           cp ci/build.gradle.kts /tmp/backup/
           cp assets/logo.png /tmp/backup/logo.png 2>/dev/null || true
           cp assets/hymns.json /tmp/backup/hymns.json 2>/dev/null || true
+          cp assets/kjv.json /tmp/backup/kjv.json 2>/dev/null || true
           cp assets/hymns.json /tmp/backup/hymns.json 2>/dev/null || true
+          cp assets/kjv.json /tmp/backup/kjv.json 2>/dev/null || true
 
       - name: Delete old Android folder
         run: rm -rf android ios linux macos web windows
@@ -59,6 +61,7 @@ jobs:
           mkdir -p assets
           cp /tmp/backup/logo.png assets/logo.png 2>/dev/null || true
           cp /tmp/backup/hymns.json assets/hymns.json 2>/dev/null || true
+          cp /tmp/backup/kjv.json assets/kjv.json 2>/dev/null || true
           for size in hdpi mdpi xhdpi xxhdpi xxxhdpi; do
             cp assets/logo.png android/app/src/main/res/mipmap-\${size}/ic_launcher.png 2>/dev/null || true
           done
