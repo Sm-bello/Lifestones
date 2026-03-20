@@ -470,7 +470,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
       if (uid != null) {
         await FirebaseFirestore.instance
           .collection('users').doc(uid).set({
-            'role': role, 'chatApproved': true,
+            'role': role,
             'chatApproved': role == 'pastor',
             'roleSetAt': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
