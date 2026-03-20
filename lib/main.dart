@@ -70,7 +70,7 @@ Future<User?> signInWithGoogle({BuildContext? context}) async {
           .collection('users').doc(result.user!.uid).get();
         final data = userDoc.data();
         if (data?['roleSetAt'] == null) {
-          Navigator.of(context).pushReplacement(
+          Future.delayed(Duration(milliseconds: 500), () => Navigator.of(context).pushReplacement(
             MaterialPageRoute(
               builder: (_) => const RoleSelectionScreen()));
           return result.user;
@@ -480,7 +480,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     }
     if (mounted) {
       setState(() => _loading = false);
-      Navigator.of(context).pushReplacement(
+      Future.delayed(Duration(milliseconds: 500), () => Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const MainShell()));
     }
   }
@@ -559,7 +559,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.of(context).pushReplacement(
+        Future.delayed(Duration(milliseconds: 500), () => Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const LoginScreen()));
       });
       return const SplashScreen();
@@ -4170,7 +4170,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   builder: (ctx, snap) {
                     final data = snap.data?.data()
                       as Map<String, dynamic>?;
-                    if (data?['role'] != 'pastor') return const SizedBox();
+                    // Visibility gate removed
                     return Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 4),
