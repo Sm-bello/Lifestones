@@ -2615,7 +2615,7 @@ class _MembersScreenState extends State<MembersScreen> {
                                     backgroundColor: kWhite,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(20)),
-                                    title: Text('Remove \${data["displayName"] ?? "Member"}?',
+                                    title: Text('Remove ${data["displayName"] ?? "Member"}?',
                                       style: const TextStyle(
                                         fontWeight: FontWeight.w800,
                                         color: kText)),
@@ -2649,7 +2649,7 @@ class _MembersScreenState extends State<MembersScreen> {
                                 if (ctx.mounted) {
                                   ScaffoldMessenger.of(ctx).showSnackBar(
                                     SnackBar(
-                                      content: Text('\${data["displayName"] ?? "Member"} removed'),
+                                      content: Text('${data["displayName"] ?? "Member"} removed'),
                                       backgroundColor: kRed));
                                 }
                               },
