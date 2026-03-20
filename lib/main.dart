@@ -5302,15 +5302,13 @@ class _BibleReadingContentState extends State<_BibleReadingContent> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (widget.chapters.length > 1)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: Row(
-              children: widget.chapters.asMap().entries.map((e) =>
-                Expanded(child: GestureDetector(
+    final chapterTabs = widget.chapters.length > 1
+      ? Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          child: Row(
+            children: widget.chapters.asMap().entries.map((e) {
+              return Expanded(
+                child: GestureDetector(
                   onTap: () => _loadChapter(e.key),
                   child: Container(
                     margin: const EdgeInsets.symmetric(horizontal: 3),
@@ -5328,8 +5326,14 @@ class _BibleReadingContentState extends State<_BibleReadingContent> {
                         fontWeight: FontWeight.w700,
                         color: _currentChapter == e.key
                           ? Colors.white
-                          : const Color(0xFFc2185b)))))
-              ).toList())),
+                          : const Color(0xFFc2185b))))));
+            }).toList()))
+      : const SizedBox.shrink();
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        chapterTabs,
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
           child: Container(
@@ -5380,6 +5384,6 @@ class _BibleReadingContentState extends State<_BibleReadingContent> {
                               color: Color(0xFF1a1a1a)))),
                       ]));
                 })),
-      ]));  
+      ]);
   }
 }
