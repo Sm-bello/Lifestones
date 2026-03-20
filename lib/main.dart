@@ -3716,9 +3716,12 @@ class _BibleScreenState extends State<BibleScreen> {
             final verses = chapters[_selectedChapter - 1] as List<dynamic>;
             // Join verses with newlines to perfectly match the UI expectations
             setState(() {
-               _passageText = verses.join('\n');
-               _errorText = '';
-            });
+          _verses = List.generate(verses.length, (index) => {
+            'verse': index + 1,
+            'text': verses[index].toString(),
+          });
+          _errorText = '';
+        });
           } else {
             setState(() => _errorText = 'Chapter not found.');
           }
