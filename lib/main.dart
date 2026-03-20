@@ -5368,7 +5368,7 @@ class _BibleReadingContentState extends State<_BibleReadingContent> {
                         SizedBox(
                           width: 28,
                           child: Text(
-                            '\${v['verse']}',
+                            '${v["verse"]}',
                             style: const TextStyle(
                               fontSize: 11,
                               color: Color(0xFFe91e8c),
