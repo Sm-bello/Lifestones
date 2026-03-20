@@ -1201,6 +1201,27 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                               color: kTextLight.withOpacity(0.7))),
                         ],
                       )),
+                      GestureDetector(
+                        onTap: () {
+                          final schedId = doc.id;
+                          final url = 'https://sm-bello.github.io/Lifestones/?scheduled=$schedId';
+                          final topic = data['topic'] ?? 'Class';
+                          final dateStr = DateFormat('EEE, MMM d · h:mm a').format(dt);
+                          final msg = '⛪ Lifestones Class Coming Up!\n\n'
+                            '📖 Topic: $topic\n'
+                            '📅 $dateStr\n\n'
+                            'Tap for live countdown & calendar reminder:\n'
+                            '$url\n\n'
+                            '"Do not forsake assembling together" — Hebrews 10:25 🙏';
+                          Share.share(msg, subject: '⛪ Upcoming Lifestones Class');
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: kGold.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10)),
+                          child: const Icon(Icons.share,
+                            color: kGold, size: 18))),
                     ]));
                 }).toList(),
               );
