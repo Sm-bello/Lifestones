@@ -129,7 +129,7 @@ class FirebaseService {
         .snapshots();
   }
 
-  static Future<void> saveRecording({
+    static Future<void> saveRecording({
     required String localPath,
     required String roomCode,
     required String topic,
@@ -139,10 +139,10 @@ class FirebaseService {
     try {
       final file = File(localPath);
       if (!await file.exists()) {
-        debugPrint('Recording file not found: \$localPath');
+        debugPrint('Recording not found: $localPath');
         return;
       }
-      final fileName = 'recordings/\$roomCode-\${DateTime.now().millisecondsSinceEpoch}.m4a';
+      final fileName = 'recordings/$roomCode-${DateTime.now().millisecondsSinceEpoch}.m4a';
       final ref = FirebaseStorage.instance.ref().child(fileName);
       final uploadTask = await ref.putFile(file);
       final downloadUrl = await uploadTask.ref.getDownloadURL();
@@ -152,17 +152,15 @@ class FirebaseService {
         'starterUid': starterUid,
         'starterName': starterName,
         'downloadUrl': downloadUrl,
-        'localPath': localPath,
         'endedAt': FieldValue.serverTimestamp(),
-        'duration': 0,
       });
-      debugPrint('Recording saved: \$downloadUrl');
+      debugPrint('Recording saved: $downloadUrl');
     } catch (e) {
-      debugPrint('Recording save error: \$e');
+      debugPrint('Recording save error: $e');
     }
   }
 
-  static Stream<QuerySnapshot> getRecordings() {
+    static Stream<QuerySnapshot> getRecordings() {
     return _db
       .collection('recordings')
       .orderBy('endedAt', descending: true)
