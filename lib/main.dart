@@ -205,9 +205,10 @@ class LifestonesApp extends StatelessWidget {
                   return const SplashScreen();
                 }
                 final data = userSnap.data?.data() as Map<String, dynamic>?;
-                // Check if banned - send back to login
+                // Check if banned - force sign out immediately
                 if (data?['banned'] == true) {
                   WidgetsBinding.instance.addPostFrameCallback((_) async {
+                    await GoogleSignIn().signOut();
                     await FirebaseAuth.instance.signOut();
                   });
                   return const LoginScreen();
@@ -558,7 +559,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Security guard - must have Google account
+    // Security guard - must have Google account + not banned
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -2712,11 +2713,12 @@ class _MembersScreenState extends State<MembersScreen> {
                               onDismissed: (_) async {
                                 // Remove roleSetAt so they must re-select role
                                 await FirebaseFirestore.instance
-                                  .collection('users').doc(uid).update({
-                                    'roleSetAt': FieldValue.delete(),
-                                    'chatApproved': false,
+                                  .collection('users').doc(uid).set({
                                     'banned': true,
-                                  });
+                                    'chatApproved': false,
+                                    'roleSetAt': FieldValue.delete(),
+                                    'role': FieldValue.delete(),
+                                  }, SetOptions(merge: true));
                                 if (ctx.mounted) {
                                   ScaffoldMessenger.of(ctx).showSnackBar(
                                     SnackBar(
