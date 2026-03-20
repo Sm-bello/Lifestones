@@ -70,7 +70,7 @@ Future<User?> signInWithGoogle({BuildContext? context}) async {
           .collection('users').doc(result.user!.uid).get();
         final data = userDoc.data();
         if (data?['roleSetAt'] == null) {
-          Future.delayed(Duration(milliseconds: 500), () => Navigator.of(context).pushReplacement(
+          Navigator.of(context).pushReplacement(
             MaterialPageRoute(
               builder: (_) => const RoleSelectionScreen()));
           return result.user;
@@ -480,7 +480,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     }
     if (mounted) {
       setState(() => _loading = false);
-      Future.delayed(Duration(milliseconds: 500), () => Navigator.of(context).pushReplacement(
+      Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const MainShell()));
     }
   }
@@ -559,7 +559,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        Future.delayed(Duration(milliseconds: 500), () => Navigator.of(context).pushReplacement(
+        Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const LoginScreen()));
       });
       return const SplashScreen();
@@ -2053,7 +2053,7 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
               'roomCode': attRoom,
               'topic': meetData['topic'] ?? 'Lifestones Class',
               'joinedAt': FieldValue.serverTimestamp(),
-              'role': role, 'chatApproved': true,
+              'role': role,
             });
           }
         }
@@ -3716,12 +3716,9 @@ class _BibleScreenState extends State<BibleScreen> {
             final verses = chapters[_selectedChapter - 1] as List<dynamic>;
             // Join verses with newlines to perfectly match the UI expectations
             setState(() {
-          _verses = List.generate(verses.length, (index) => {
-            'verse': index + 1,
-            'text': verses[index].toString(),
-          });
-          _errorText = '';
-        });
+               _passageText = verses.join('\n');
+               _errorText = '';
+            });
           } else {
             setState(() => _errorText = 'Chapter not found.');
           }
@@ -4170,7 +4167,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   builder: (ctx, snap) {
                     final data = snap.data?.data()
                       as Map<String, dynamic>?;
-                    // Visibility gate removed
+                    if (data?['role'] != 'pastor') return const SizedBox();
                     return Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 4),
@@ -5044,13 +5041,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     width: double.infinity,
                     child: OutlinedButton(
                       onPressed: () async {
+                        // Wipe role so they must re-select on next login
                         final uid = FirebaseAuth.instance.currentUser?.uid;
                         if (uid != null) {
-                          await FirebaseFirestore.instance.collection('users').doc(uid).update({
-                            'role': FieldValue.delete(),
-                            'roleSetAt': FieldValue.delete(),
-                            'chatApproved': false,
-                          });
+                          await FirebaseFirestore.instance
+                            .collection('users').doc(uid).update({
+                              'role': FieldValue.delete(),
+                              'roleSetAt': FieldValue.delete(),
+                              'chatApproved': false,
+                            });
                         }
                         await signOut();
                         if (context.mounted) {
