@@ -5245,9 +5245,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
-// ── BIBLE READING CONTENT WIDGET ─────────────────────────
+// ── BIBLE READING CONTENT WIDGET ──────────────────────
 
- 
 class _BibleReadingContent extends StatefulWidget {
   final String bookName;
   final List chapters;
@@ -5258,6 +5257,7 @@ class _BibleReadingContent extends StatefulWidget {
     required this.summary});
   @override
   State<_BibleReadingContent> createState() => _BibleReadingContentState();
+}
 
 class _BibleReadingContentState extends State<_BibleReadingContent> {
   List<Map<String,dynamic>> _verses = [];
@@ -5270,32 +5270,32 @@ class _BibleReadingContentState extends State<_BibleReadingContent> {
     _loadChapter(0);
   }
 
-  Future<void> _loadChapter(int idx) async {
+  Future<void> _loadChapter(int chapterIndex) async {
     setState(() { _loading = true; _verses = []; });
     try {
       final jsonStr = await DefaultAssetBundle.of(context)
         .loadString('assets/kjv.json');
-      final data = (jsonDecode(jsonStr) as List<dynamic>);
+      final data = jsonDecode(jsonStr) as List<dynamic>;
       final book = data.firstWhere(
         (b) => (b['name'] as String).toLowerCase() ==
           widget.bookName.toLowerCase(),
         orElse: () => null);
       if (book != null) {
         final chapters = book['chapters'] as List<dynamic>;
-        final chNum = (widget.chapters[idx] as int) - 1;
-        if (chNum < chapters.length) {
+        final chNum = (widget.chapters[chapterIndex] as int) - 1;
+        if (chNum >= 0 && chNum < chapters.length) {
           final verses = chapters[chNum] as List<dynamic>;
           setState(() {
             _verses = verses.asMap().entries.map((e) => {
               'verse': e.key + 1,
               'text': e.value.toString().trim(),
             }).toList();
-            _currentChapter = idx;
+            _currentChapter = chapterIndex;
           });
         }
       }
     } catch (e) {
-      debugPrint('Reading error: \$e');
+      debugPrint('Reading error: $e');
     }
     setState(() => _loading = false);
   }
@@ -5305,7 +5305,6 @@ class _BibleReadingContentState extends State<_BibleReadingContent> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Chapter tabs if multiple chapters
         if (widget.chapters.length > 1)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -5322,7 +5321,7 @@ class _BibleReadingContentState extends State<_BibleReadingContent> {
                         : const Color(0xFFFFE4EC),
                       borderRadius: BorderRadius.circular(10)),
                     child: Text(
-                      'Chapter \${e.value}',
+                      'Chapter ${e.value}',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 12,
@@ -5330,9 +5329,7 @@ class _BibleReadingContentState extends State<_BibleReadingContent> {
                         color: _currentChapter == e.key
                           ? Colors.white
                           : const Color(0xFFc2185b)))))
-              ).toList()),
-          ),
-        // Summary
+              ).toList())),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
           child: Container(
@@ -5347,7 +5344,6 @@ class _BibleReadingContentState extends State<_BibleReadingContent> {
                 fontStyle: FontStyle.italic,
                 color: Color(0xFF880e4f))))),
         const SizedBox(height: 8),
-        // Verses
         ConstrainedBox(
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.5),
@@ -5384,8 +5380,6 @@ class _BibleReadingContentState extends State<_BibleReadingContent> {
                               color: Color(0xFF1a1a1a)))),
                       ]));
                 })),
-      ]));
+      ]));  
   }
-}
-
 }
