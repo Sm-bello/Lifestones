@@ -1473,8 +1473,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     final bookName = todayPlan['book'] as String;
     final chapters = todayPlan['ch'] as List;
     final chStr = chapters.length == 1
-      ? '\$bookName \${chapters[0]}'
-      : '\$bookName \${chapters[0]}-\${chapters.last}';
+      ? '$bookName ${chapters[0]}'
+      : '$bookName ${chapters[0]}-${chapters.last}';
 
     return GestureDetector(
       onTap: () => _showBibleReadingDialog(
@@ -1529,7 +1529,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                 Expanded(child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Day \${dayOfYear % fullPlan.length + 1} of \${fullPlan.length}',
+                    Text('Day ${dayOfYear % fullPlan.length + 1} of ${fullPlan.length}',
                       style: const TextStyle(fontSize: 11,
                         color: Color(0xFFc2185b),
                         fontWeight: FontWeight.w700,
@@ -1583,7 +1583,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              '\${dayOfYear % 7 + 1} of 7 days this week · Tap to read full chapter',
+              '${dayOfYear % 7 + 1} of 7 days this week · Tap to read full chapter',
               style: const TextStyle(fontSize: 11,
                 color: Color(0xFFc2185b))),
           ],
