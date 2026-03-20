@@ -5247,7 +5247,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
 // ── BIBLE READING CONTENT WIDGET ─────────────────────────
 
-}
+ 
 class _BibleReadingContent extends StatefulWidget {
   final String bookName;
   final List chapters;
@@ -5386,4 +5386,6 @@ class _BibleReadingContentState extends State<_BibleReadingContent> {
                 })),
       ]));
   }
+}
+
 }
