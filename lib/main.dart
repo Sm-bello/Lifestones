@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_windowmanager/flutter_windowmanager.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -898,17 +897,14 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       final doc = await FirebaseFirestore.instance
         .collection('users').doc(uid).get();
       final role = doc.data()?['role'] ?? 'member';
+      const channel = MethodChannel('lifestones/security');
       if (role == 'pastor') {
-        // Pastors can screenshot
-        await FlutterWindowManager.clearFlags(
-          FlutterWindowManager.FLAG_SECURE);
+        await channel.invokeMethod('clearSecure');
       } else {
-        // Members cannot screenshot or screen record
-        await FlutterWindowManager.addFlags(
-          FlutterWindowManager.FLAG_SECURE);
+        await channel.invokeMethod('setSecure');
       }
     } catch (e) {
-      debugPrint('Screen security error: \$e');
+      debugPrint('Screen security: \$e');
     }
   }
 
