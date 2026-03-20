@@ -1692,6 +1692,7 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
   final User? _user = FirebaseAuth.instance.currentUser;
   FlutterSoundRecorder? _recorder;
   bool _isRecording = false;
+  String? _currentTopic;
   String? _recordingPath;
 
   @override
@@ -2183,7 +2184,7 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
   }
 
   Widget _buildLiveCard(Map<String, dynamic> data) {
-    final isLive = data['isLive'] == true;
+    final isLive = data['isLive'] == true; // isLive == true
     if (!isLive) return const SizedBox();
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.98, end: 1.02),
