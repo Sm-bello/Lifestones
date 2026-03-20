@@ -3609,6 +3609,7 @@ class _BibleScreenState extends State<BibleScreen> {
   bool _isLoading = false;
   String _passageText = '';
   String _errorText = '';
+  List<Map<String, dynamic>> _verses = [];
 
   final List<Map<String,String>> _versions = [
     {'label': 'KJV', 'value': 'kjv'},
@@ -3698,7 +3699,7 @@ class _BibleScreenState extends State<BibleScreen> {
   }
 
   Future<void> _loadPassage() async {
-    setState(() { _isLoading = true; _passageText = ''; _errorText = ''; });
+    setState(() { _isLoading = true; _passageText = ''; _errorText = ''; _verses = []; });
     
     // --- OFFLINE KJV ENGINE ---
     if (_selectedVersion == 'kjv') {
@@ -3742,7 +3743,18 @@ class _BibleScreenState extends State<BibleScreen> {
       
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        setState(() => _passageText = data['text'] ?? 'Passage not found');
+        final verseList = data['verses'] as List<dynamic>? ?? [];
+        if (verseList.isNotEmpty) {
+          setState(() {
+            _verses = verseList.map((v) => {
+              'verse': v['verse'] as int,
+              'text': (v['text'] as String).trim(),
+            }).toList();
+            _passageText = 'loaded';
+          });
+        } else {
+          setState(() => _passageText = data['text'] ?? 'Passage not found');
+        }
       } else {
         setState(() => _errorText = 'Could not load. Check connection.');
       }
