@@ -1441,17 +1441,17 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       {'book':'Genesis','ch':[6,7],'theme':'The Flood','summary':"God sees the wickedness of man and decides to cleanse the earth. Noah — a righteous man — is chosen to build the ark and preserve life."},
       {'book':'Genesis','ch':[12,13],'theme':'Abraham Called','summary':"God calls Abram out of his homeland and makes an extraordinary promise — to make him a great nation and bless all families of the earth."},
       {'book':'Genesis','ch':[22],'theme':'The Ultimate Test','summary':"God tests Abraham by asking him to sacrifice Isaac. Abraham obeys fully and God provides a ram — a foreshadowing of Christ."},
-      {'book':'Exodus','ch':[1,2],'theme':'Moses Born','summary':"Israel is enslaved in Egypt. Moses is born, hidden in a basket, and raised in Pharaoh's palace — prepared by God for a mission he does not yet know."},
+      {'book':'Exodus','ch':[1,2],'theme':'Moses Born','summary':"Israel is enslaved in Egypt. Moses is born, hidden in a basket, and raised in Pharaoh\'s palace — prepared by God for a mission he does not yet know."},
       {'book':'Exodus','ch':[3,4],'theme':'The Burning Bush','summary':"God appears to Moses in a burning bush and calls him to deliver Israel. Moses hesitates but God reassures him — I AM has sent you."},
       {'book':'Exodus','ch':[12,14],'theme':'Passover and Exodus','summary':"The final plague strikes Egypt. The blood of a lamb protects Israel. Pharaoh releases them, then pursues — only to see the Red Sea swallow his army."},
-      {'book':'Psalms','ch':[1],'theme':'The Blessed Man','summary':"The man who meditates on God's word day and night is like a tree planted by rivers — bearing fruit in every season. The wicked are like chaff blown away."},
-      {'book':'Psalms','ch':[23],'theme':'The Good Shepherd','summary':"The Lord is my shepherd — I shall not want. Through green pastures and dark valleys, God's goodness and mercy follow all our days."},
+      {'book':'Psalms','ch':[1],'theme':'The Blessed Man','summary':"The man who meditates on God\'s word day and night is like a tree planted by rivers — bearing fruit in every season. The wicked are like chaff blown away."},
+      {'book':'Psalms','ch':[23],'theme':'The Good Shepherd','summary':"The Lord is my shepherd — I shall not want. Through green pastures and dark valleys, God\'s goodness and mercy follow all our days."},
       {'book':'Psalms','ch':[51],'theme':'Repentance','summary':"David cries out after his sin — create in me a clean heart, O God. Restore to me the joy of your salvation. God desires a broken and contrite heart."},
       {'book':'Psalms','ch':[91],'theme':'Divine Protection','summary':"He who dwells in the shelter of the Most High rests in His shadow. A thousand may fall at your side but it shall not come near you."},
-      {'book':'Psalms','ch':[139],'theme':'Known by God','summary':"You formed my inward parts and knit me together in my mother's womb. God knows every thought, every word, every step — His thoughts toward us are precious."},
+      {'book':'Psalms','ch':[139],'theme':'Known by God','summary':"You formed my inward parts and knit me together in my mother\'s womb. God knows every thought, every word, every step — His thoughts toward us are precious."},
       {'book':'Proverbs','ch':[1],'theme':'Wisdom Calls','summary':"The fear of the Lord is the beginning of wisdom. Wisdom calls out in the streets but fools despise her. Choose wisdom and she will protect and honor you."},
       {'book':'Proverbs','ch':[3],'theme':'Trust the Lord','summary':"Trust in the Lord with all your heart and lean not on your own understanding. In all your ways acknowledge Him and He shall direct your paths."},
-      {'book':'Isaiah','ch':[40],'theme':"God's Greatness",'summary':"Who has measured the waters in the hollow of His hand? Those who wait upon the Lord shall renew their strength and mount up with wings like eagles."},
+      {'book':'Isaiah','ch':[40],'theme':"God\'s Greatness",'summary':"Who has measured the waters in the hollow of His hand? Those who wait upon the Lord shall renew their strength and mount up with wings like eagles."},
       {'book':'Isaiah','ch':[53],'theme':'The Suffering Servant','summary':"He was pierced for our transgressions and crushed for our iniquities. The punishment that brought us peace was upon Him — 700 years before the cross."},
       {'book':'Matthew','ch':[1,2],'theme':'Birth of Jesus','summary':"Jesus is born of a virgin in Bethlehem. Wise men travel from the east following a star. Herod plots to destroy the child but God protects the Holy Family."},
       {'book':'Matthew','ch':[5,6],'theme':'Sermon on the Mount','summary':"Blessed are the poor in spirit. Blessed are the peacemakers. Jesus redefines righteousness — going beyond outward obedience to the heart."},
@@ -5243,7 +5243,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
-
+}
 
 // ── BIBLE READING CONTENT WIDGET ─────────────────────────
 }
@@ -5386,4 +5386,4 @@ class _BibleReadingContentState extends State<_BibleReadingContent> {
       ]));
   }
 }
-}
+
