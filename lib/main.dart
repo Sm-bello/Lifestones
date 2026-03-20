@@ -3738,9 +3738,9 @@ class _BibleScreenState extends State<BibleScreen> {
 
   final List<Map<String,String>> _versions = [
     {'label': 'KJV', 'value': 'kjv'},
-    {'label': 'Amplified', 'value': 'amp'},
-    {'label': 'NIV', 'value': 'niv'},
-    {'label': 'NLT', 'value': 'nlt'},
+    {'label': 'WEB', 'value': 'web'},
+    {'label': 'ASV', 'value': 'asv'},
+    {'label': 'BBE', 'value': 'bbe'},
   ];
 
   final List<String> _books = [
