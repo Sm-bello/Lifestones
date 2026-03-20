@@ -455,8 +455,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   Future<void> _selectRole(String role) async {
     if (role == 'pastor') {
       final pin = await _showPinDialog();
-      // PIN is checked inside _showPinDialog against Firebase
-    if (pin == null || pin.isEmpty) {
+      if (pin == null || pin.isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('❌ Wrong PIN. Try again.'),
@@ -486,74 +485,72 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     }
   }
 
-  Future<String?> _showPinDialog() async {
-    // Fetch PIN from Firebase - not hardcoded
+    Future<String?> _showPinDialog() async {
     String correctPin = '7749';
     try {
       final doc = await FirebaseFirestore.instance
         .collection('app_config').doc('security').get();
       if (doc.exists && doc.data()?['pastor_pin'] != null) {
         correctPin = doc.data()!['pastor_pin'];
-      } else {
-        // First time - create it in Firebase
-        await FirebaseFirestore.instance
-          .collection('app_config').doc('security')
-          .set({'pastor_pin': '7749'}, SetOptions(merge: true));
       }
-    } catch (e) { debugPrint('PIN fetch: \$e'); }
+    } catch (e) { debugPrint('PIN: \$e'); }
 
     final ctrl = TextEditingController();
-    return showDialog<String>(
+    bool wrongPin = false;
+    final result = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: kWhite,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20)),
-        title: const Text('Pastor Verification',
-          style: TextStyle(fontWeight: FontWeight.w800, color: kText)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Enter your Pastor PIN',
-              style: TextStyle(color: kTextLight.withOpacity(0.7))),
-            const SizedBox(height: 16),
-            TextField(
-              controller: ctrl,
-              obscureText: true,
-              keyboardType: TextInputType.number,
-              maxLength: 4,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 28,
-                fontWeight: FontWeight.w800, letterSpacing: 8),
-              decoration: InputDecoration(
-                counterText: '',
-                hintText: '••••',
-                filled: true, fillColor: kMilk,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: kGold.withOpacity(0.3))),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: kGold, width: 2))),
-            ),
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setS) => AlertDialog(
+          backgroundColor: kWhite,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20)),
+          title: const Text('Pastor PIN',
+            style: TextStyle(
+              fontWeight: FontWeight.w800, color: kText)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Enter your Pastor PIN to continue',
+                style: TextStyle(fontSize: 13)),
+              const SizedBox(height: 12),
+              TextField(
+                controller: ctrl,
+                keyboardType: TextInputType.number,
+                obscureText: true,
+                maxLength: 6,
+                decoration: InputDecoration(
+                  hintText: 'Enter PIN',
+                  counterText: '',
+                  errorText: wrongPin ? 'Wrong PIN' : null,
+                  filled: true, fillColor: kMilk,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none))),
+            ]),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, null),
+              child: const Text('Cancel')),
+            ElevatedButton(
+              onPressed: () {
+                if (ctrl.text.trim() == correctPin) {
+                  Navigator.pop(ctx, ctrl.text.trim());
+                } else {
+                  setS(() => wrongPin = true);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kGold,
+                foregroundColor: kWhite,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10))),
+              child: const Text('Confirm')),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, ''),
-            child: const Text('Cancel',
-              style: TextStyle(color: kTextLight))),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, ctrl.text),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: kGold, foregroundColor: kWhite,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10))),
-            child: const Text('Verify',
-              style: TextStyle(fontWeight: FontWeight.w700))),
-        ],
       ),
     );
+    return result;
   }
 
   @override
