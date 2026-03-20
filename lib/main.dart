@@ -4993,7 +4993,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             style: TextStyle(
                               color: kGold,
                               fontWeight: FontWeight.w700)))],
-                      )),
+                      ));
+                    },
                     child: _buildTile(Icons.info_outline,
                       'About Lifestones', 'Tap to read our guidelines')),
                   const SizedBox(height: 24),
