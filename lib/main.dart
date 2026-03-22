@@ -15,7 +15,6 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:flutter_sound/flutter_sound.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:dio/dio.dart';
@@ -1823,7 +1822,9 @@ class MeetingsScreen extends StatefulWidget {
 
 class _MeetingsScreenState extends State<MeetingsScreen> {
   final User? _user = FirebaseAuth.instance.currentUser;
-  FlutterSoundRecorder? _recorder;
+  // Recording handled by LiveKit
+  bool _isRecording = false;
+  String? _recordingPath;
   bool _isRecording = false;
   String? _currentTopic;
   String? _recordingPath;
@@ -1831,8 +1832,7 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
   @override
   void initState() {
     super.initState();
-    _recorder = FlutterSoundRecorder();
-  }
+      }
 
   @override
   void dispose() {
