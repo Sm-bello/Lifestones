@@ -2059,6 +2059,129 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       ),
     );
   }
+
+  // ════════════════════════════════════════════════════════════════════
+  // NEW: COUNSELLING + 2x2 GRID SECTION
+  // ════════════════════════════════════════════════════════════════════
+  Widget _buildCounsellingAndGridSection() {
+    return Column(
+      children: [
+        // COUNSELLING CARD
+        GestureDetector(
+          onTap: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Counselling - Phase 2")),
+            );
+          },
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF4A90C4), Color(0xFF2F6EA5)],
+              ),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.healing, color: Colors.white, size: 24),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Counselling",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "Talk to Pastor privately",
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+        // 2x2 GRID
+        GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 2.0,
+          children: [
+            _buildGridItem(
+              "📖",
+              "Bible",
+              () => _showBibleReadingDialog("Genesis", ["1", "2", "3"], 1),
+            ),
+            _buildGridItem(
+              "🎵",
+              "Hymns",
+              () => _showHymn({}),
+            ),
+            _buildGridItem(
+              "🙏",
+              "Prayer",
+              () => _submitPrayer(),
+            ),
+            _buildGridItem(
+              "📢",
+              "Announcements",
+              () => ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Announcements - Phase 2")),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGridItem(String emoji, String label, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 6,
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 24)),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class MeetingsScreen extends StatefulWidget {
