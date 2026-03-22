@@ -2056,9 +2056,7 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
     );
     await NotificationService.sendMeetingStarted(
       _user?.displayName ?? 'Someone');
-    if (role == 'pastor') {
-      await _startRecording(roomCode);
-    }
+
     await _joinMeeting(roomCode, role);
   }
 
