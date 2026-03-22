@@ -1,0 +1,43 @@
+name: Build Web Preview
+
+# This means it will ONLY run when you manually click "Run" in GitHub
+on:
+  workflow_dispatch: 
+
+# Gives the bot permission to push the web files into your docs/ folder
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Fix Web Folder (Safety Step)
+        run: flutter create --platforms web .
+
+      - name: Build Web App
+        # The base-href MUST match your repository name and folder exactly
+        run: flutter build web --release --base-href /Lifestones/app/
+
+      - name: Move to docs/app
+        run: |
+          mkdir -p docs/app
+          # Clear the old preview before copying the new one
+          rm -rf docs/app/*
+          cp -r build/web/* docs/app/
+
+      - name: Commit and Push Preview
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          git add docs/app/
+          git commit -m "🚀 Deploy Web Preview to docs/app/" || echo "No changes"
+          git push
