@@ -929,7 +929,6 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   }
 
   @override
-  void dispose() { _scriptureCtrl.dispose(); super.dispose(); }
 
   String get _greeting {
     final h = DateTime.now().hour;
@@ -968,7 +967,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                       style: TextStyle(fontSize: 13,
                         color: kTextLight.withOpacity(0.7))),
                     const SizedBox(height: 20),
-                    _buildScriptureCarousel(),
+                    _buildCounsellingAndGridSection(),
                     const SizedBox(height: 20),
                     _buildMeetingsLayer(),
                     const SizedBox(height: 20),
