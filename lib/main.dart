@@ -1822,12 +1822,9 @@ class MeetingsScreen extends StatefulWidget {
 
 class _MeetingsScreenState extends State<MeetingsScreen> {
   final User? _user = FirebaseAuth.instance.currentUser;
-  // Recording handled by LiveKit
   bool _isRecording = false;
   String? _recordingPath;
-  bool _isRecording = false;
   String? _currentTopic;
-  String? _recordingPath;
 
   @override
   void initState() {
