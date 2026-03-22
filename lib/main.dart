@@ -1836,71 +1836,10 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
 
   @override
   void dispose() {
-    _recorder?.closeRecorder();
     super.dispose();
   }
 
-  Future<void> _startRecording(String roomCode) async {
-    final micStatus = await Permission.microphone.request();
-    final storageStatus = await Permission.storage.request();
-    if (!micStatus.isGranted) return;
-    final dir = await getApplicationDocumentsDirectory();
-    _recordingPath = '\${dir.path}/recording_\$roomCode\_\${DateTime.now().millisecondsSinceEpoch}.aac';
-    await _recorder!.openRecorder();
-    await _recorder!.startRecorder(
-      toFile: _recordingPath,
-      codec: Codec.aacADTS,
-    );
-    setState(() => _isRecording = true);
-    debugPrint('Recording started: \$_recordingPath');
-  }
 
-  Future<void> _stopRecordingAndUpload(String roomCode) async {
-    if (!_isRecording || _recorder == null) return;
-    await _recorder!.stopRecorder();
-    setState(() => _isRecording = false);
-    if (_recordingPath == null) return;
-    final file = File(_recordingPath!);
-    if (!await file.exists()) return;
-
-    try {
-      // Upload to Firebase Storage
-      final ref = FirebaseStorage.instance
-        .ref('recordings/\$roomCode/\${DateTime.now().millisecondsSinceEpoch}.aac');
-      final uploadTask = await ref.putFile(file);
-      final downloadUrl = await uploadTask.ref.getDownloadURL();
-
-      // Save to Firestore
-      // Get topic from live meeting
-      String meetingTopic = 'Lifestones Class';
-      try {
-        final doc = await FirebaseFirestore.instance
-          .collection('meetings').doc('current_live').get();
-        meetingTopic = doc.data()?['topic'] ?? 'Lifestones Class';
-      } catch (e) { debugPrint('Topic fetch error: \$e'); }
-
-      await FirebaseFirestore.instance.collection('recordings').add({
-        'roomCode': roomCode,
-        'downloadUrl': downloadUrl,
-        'title': meetingTopic,
-        'duration': '',
-        'uploadedBy': _user?.displayName ?? 'Pastor',
-        'uploadedAt': FieldValue.serverTimestamp(),
-        'endedAt': FieldValue.serverTimestamp(),
-        'summary': '',
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ Recording saved for all members!'),
-            backgroundColor: kGreen,
-            duration: Duration(seconds: 4)));
-      }
-    } catch (e) {
-      debugPrint('Upload error: \$e');
-    }
-  }
 
   void _showRoleDialog({required bool isStarting, String? roomCode}) {
     String selectedRole = 'member';
@@ -2129,9 +2068,8 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
   Future<void> _endMeetingAndRecord(String roomCode) async {
     final user = FirebaseAuth.instance.currentUser;
     try {
-      if (_isRecording && _recorder != null) {
-        final path = await _recorder!.stopRecorder();
-        await _recorder!.closeRecorder();
+      if (_isRecording) {
+        final path = _recordingPath;
         setState(() => _isRecording = false);
         if (path != null && path.isNotEmpty) {
           if (mounted) {
