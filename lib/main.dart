@@ -5443,6 +5443,7 @@ class _BibleReadingContentState extends State<_BibleReadingContent> {
   }
 
 
+}
 // ── EVANGELISM ONBOARDING SCREEN ─────────────────────
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -5663,5 +5664,4 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 const SizedBox(height: 32),
               ])))));
   }
-}
 }
