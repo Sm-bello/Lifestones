@@ -877,19 +877,19 @@ class DiscoverScreen extends StatefulWidget {
 
 class _DiscoverScreenState extends State<DiscoverScreen> {
   final User? _user = FirebaseAuth.instance.currentUser;
-  final PageController _scriptureCtrl = PageController();
+
   int _currentPage = 0;
   bool _isPaused = false;
 
-  final List<Map<String, String>> _scriptures = [
-    {'verse': '"I can do all things through Christ who strengthens me."', 'ref': 'Philippians 4:13'},
-    {'verse': '"The Lord is my shepherd; I shall not want."', 'ref': 'Psalm 23:1'},
-    {'verse': '"Trust in the Lord with all your heart."', 'ref': 'Proverbs 3:5'},
-    {'verse': '"For I know the plans I have for you, declares the Lord."', 'ref': 'Jeremiah 29:11'},
-    {'verse': '"Be still, and know that I am God."', 'ref': 'Psalm 46:10'},
-    {'verse': '"The joy of the Lord is your strength."', 'ref': 'Nehemiah 8:10'},
-    {'verse': '"With God all things are possible."', 'ref': 'Matthew 19:26'},
-  ];
+
+
+
+
+
+
+
+
+
 
   @override
   void initState() {
@@ -984,6 +984,257 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           ),
         ),
       ),
+
+  // ════════════════════════════════════════════════════════════════════
+  // NEW: COUNSELLING + 2x2 GRID SECTION
+  // ════════════════════════════════════════════════════════════════════
+  Widget _buildCounsellingAndGridSection() {
+    return Column(
+      children: [
+        // COUNSELLING CARD
+        GestureDetector(
+          onTap: () async {
+            final uid = _user?.uid;
+            final doc = await FirebaseFirestore.instance
+                .collection('users')
+                .doc(uid)
+                .get();
+            final role = doc.data()?['role'] ?? 'member';
+
+            if (!mounted) return;
+
+            if (role == 'pastor') {
+              // Pastor PIN required
+              String enteredPin = '';
+              final result = await showDialog<bool>(
+                context: context,
+                builder: (_) => AlertDialog(
+                  title: const Text('Counselling Access'),
+                  content: TextField(
+                    keyboardType: TextInputType.number,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      hintText: 'Enter PIN (7070)',
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (val) => enteredPin = val,
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, enteredPin == '7070'),
+                      child: const Text('Submit'),
+                    ),
+                  ],
+                ),
+              );
+
+              if (result == true) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Pastor Counselling Hub (Phase 2)')),
+                  );
+                }
+              } else {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Incorrect PIN')),
+                  );
+                }
+              }
+            } else {
+              // Member: confidentiality popup
+              showDialog(
+                context: context,
+                builder: (_) => AlertDialog(
+                  title: const Text('🔐 Confidentiality Assurance'),
+                  content: const Text(
+                    'Everything you share here is:\n\n'
+                    '✓ Private (pastor only)\n'
+                    '✓ Confidential (not in public chat)\n'
+                    '✓ Protected (no screenshots)\n'
+                    '✓ Secure (encrypted)\n\n'
+                    'By tapping "I Approve", you confirm you understand.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Member Counselling Chat (Phase 2)'),
+                          ),
+                        );
+                      },
+                      child: const Text('I Approve'),
+                    ),
+                  ],
+                ),
+              );
+            }
+          },
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF4A90C4), Color(0xFF2F6EA5)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF4A90C4).withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.healing, color: Colors.white, size: 24),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Counselling',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Talk to the Pastor privately',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white.withOpacity(0.7),
+                  size: 14,
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+
+        // 2x2 GRID
+        GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 2.0,
+          children: [
+            _buildGridItem(
+              emoji: '📖',
+              label: 'Bible',
+              color: const Color(0xFF7B5A1E),
+              bgColor: const Color(0xFFFFF3DC),
+              onTap: () {
+                _showBibleReadingDialog('Genesis', ['1', '2', '3'], 1);
+              },
+            ),
+            _buildGridItem(
+              emoji: '🎵',
+              label: 'Hymns',
+              color: const Color(0xFF2D6A9F),
+              bgColor: const Color(0xFFE3F1FB),
+              onTap: () {
+                _showHymn({});
+              },
+            ),
+            _buildGridItem(
+              emoji: '🙏',
+              label: 'Prayer',
+              color: const Color(0xFF6B4FB0),
+              bgColor: const Color(0xFFF2EDFD),
+              onTap: () {
+                _submitPrayer();
+              },
+            ),
+            _buildGridItem(
+              emoji: '📢',
+              label: 'Announcements',
+              color: const Color(0xFFB85C0A),
+              bgColor: const Color(0xFFFFF0E3),
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Announcements (Phase 2)')),
+                );
+              },
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGridItem({
+    required String emoji,
+    required String label,
+    required Color color,
+    required Color bgColor,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 6,
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 24)),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
     );
   }
 
@@ -1082,64 +1333,64 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     );
   }
 
-  Widget _buildScriptureCarousel() {
-    return Column(
-      children: [
-        GestureDetector(
-          onLongPressStart: (_) => setState(() => _isPaused = true),
-          onLongPressEnd: (_) => setState(() => _isPaused = false),
-          child: Container(
-            height: 140,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [kGold, kGoldDark],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [BoxShadow(
-                color: kGoldNeon.withOpacity(0.3),
-                blurRadius: 16, spreadRadius: 2,
-                offset: const Offset(0, 4))]),
-            child: PageView.builder(
-              controller: _scriptureCtrl,
-              onPageChanged: (i) => setState(() => _currentPage = i),
-              itemCount: _scriptures.length,
-              itemBuilder: (_, i) => Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('📖', style: TextStyle(fontSize: 20)),
-                    const SizedBox(height: 8),
-                    Text(_scriptures[i]['verse']!,
-                      style: const TextStyle(color: kWhite, fontSize: 14,
-                        fontStyle: FontStyle.italic, height: 1.4)),
-                    const SizedBox(height: 6),
-                    Text(_scriptures[i]['ref']!,
-                      style: TextStyle(color: kWhite.withOpacity(0.8),
-                        fontSize: 11, fontWeight: FontWeight.w700)),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(_scriptures.length, (i) =>
-            Container(
-              width: i == _currentPage ? 16 : 6,
-              height: 6,
-              margin: const EdgeInsets.symmetric(horizontal: 2),
-              decoration: BoxDecoration(
-                color: i == _currentPage ? kGold : kGold.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(3)))),
-        ),
-      ],
-    );
-  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   Widget _buildMeetingsLayer() {
     return Container(
