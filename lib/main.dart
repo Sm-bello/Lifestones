@@ -207,7 +207,7 @@ class LifestonesApp extends StatelessWidget {
                 // Check if banned - force sign out immediately
                 if (data?['banned'] == true) {
                   WidgetsBinding.instance.addPostFrameCallback((_) async {
-                    await GoogleSignIn().signOut();
+                    await GoogleSignIn(clientId: '125428172963-dd65dj5s15p6hkbpong3r6mtia6kvcs0.apps.googleusercontent.com').signOut();
                     await FirebaseAuth.instance.signOut();
                   });
                   return const LoginScreen();
