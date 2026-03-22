@@ -61,7 +61,7 @@ Future<User?> signInWithGoogle({BuildContext? context}) async {
           .doc(result.user!.uid)
           .update({'fcmToken': token});
       }
-    } catch (e) { debugPrint('FCM token error: \$e'); }
+    } catch (e) { debugPrint('FCM token error: $e'); }
     // Immediately check role for new users
     if (result.user != null && context != null && context.mounted) {
       try {
@@ -74,7 +74,7 @@ Future<User?> signInWithGoogle({BuildContext? context}) async {
               builder: (_) => const RoleSelectionScreen()));
           return result.user;
         }
-      } catch (e) { debugPrint('Role check: \$e'); }
+      } catch (e) { debugPrint('Role check: $e'); }
     }
     return result.user;
   } catch (e) {
@@ -134,7 +134,7 @@ void _scheduleDailyBibleNotification() {
           body: '${plan["book"]}: ${plan["summary"]}',
         );
       }
-    } catch (e) { debugPrint('Bible notify: \$e'); }
+    } catch (e) { debugPrint('Bible notify: $e'); }
     return true;
   });
 }
@@ -161,17 +161,17 @@ void _checkScheduledMeetings() {
           // 30 min reminder
           await NotificationService.showLocalNotification(
             title: '⛪ Class in 30 minutes!',
-            body: '"\$topic" starts at \${DateFormat("h:mm a").format(scheduledAt)}. Get ready!',
+            body: '"$topic" starts at ${DateFormat("h:mm a").format(scheduledAt)}. Get ready!',
           );
         } else if (diff <= 5 && diff > 3) {
           // 5 min alarm
           await NotificationService.showLocalNotification(
             title: '🔔 Class starting NOW!',
-            body: '"\$topic" is about to begin! Tap to join.',
+            body: '"$topic" is about to begin! Tap to join.',
           );
         }
       }
-    } catch (e) { debugPrint('Schedule check error: \$e'); }
+    } catch (e) { debugPrint('Schedule check error: $e'); }
     return true;
   });
 }
@@ -476,12 +476,21 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
           }, SetOptions(merge: true));
       }
     } catch (e) {
-      debugPrint('Role error: \$e');
+      debugPrint('Role error: $e');
     }
     if (mounted) {
       setState(() => _loading = false);
+      // Check if onboarding complete
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      bool onboarded = false;
+      if (uid != null) {
+        final doc = await FirebaseFirestore.instance
+          .collection('users').doc(uid).get();
+        onboarded = doc.data()?['onboardingComplete'] == true;
+      }
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const MainShell()));
+        MaterialPageRoute(builder: (_) =>
+          onboarded ? const MainShell() : const OnboardingScreen()));
     }
   }
 
@@ -497,7 +506,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
           .collection('app_config').doc('security')
           .set({'pastor_pin': '7749'}, SetOptions(merge: true));
       }
-    } catch (e) { debugPrint('PIN: \$e'); }
+    } catch (e) { debugPrint('PIN: $e'); }
     final ctrl = TextEditingController();
     bool wrongPin = false;
     final result = await showDialog<String>(
@@ -903,7 +912,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         await channel.invokeMethod('setSecure');
       }
     } catch (e) {
-      debugPrint('Screen security: \$e');
+      debugPrint('Screen security: $e');
     }
   }
 
@@ -1012,7 +1021,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                       if (url.isNotEmpty) {
                         ScaffoldMessenger.of(ctx).showSnackBar(
                           SnackBar(
-                            content: Text('Update v\$latest available! Download from your Pastor.'),
+                            content: Text('Update v$latest available! Download from your Pastor.'),
                             backgroundColor: kGold,
                             duration: const Duration(seconds: 5),
                           ),
@@ -1025,7 +1034,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                       decoration: BoxDecoration(
                         color: kRed,
                         borderRadius: BorderRadius.circular(8)),
-                      child: Text('Update v\$latest',
+                      child: Text('Update v$latest',
                         style: const TextStyle(
                           color: kWhite, fontSize: 9,
                           fontWeight: FontWeight.w700))),
@@ -1294,7 +1303,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                   children: [
                     Text(title, style: const TextStyle(
                       fontSize: 18, fontWeight: FontWeight.w800, color: kText)),
-                    Text('By \$uploadedBy · \$date',
+                    Text('By $uploadedBy · $date',
                       style: TextStyle(fontSize: 11,
                         color: kTextLight.withOpacity(0.6))),
                   ],
@@ -1414,12 +1423,12 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         }
       });
     } catch (e) {
-      debugPrint('Play error: \$e');
+      debugPrint('Play error: $e');
       if (mounted) {
         setState(() => _isPlaying = false);
         ScaffoldMessenger.of(ctx).showSnackBar(
           SnackBar(
-            content: Text('Playback error: \$e'),
+            content: Text('Playback error: $e'),
             backgroundColor: kRed));
       }
     }
@@ -1432,21 +1441,21 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       final status = await Permission.storage.request();
       if (!status.isGranted) return;
       final dir = await getExternalStorageDirectory();
-      final path = '\${dir!.path}/\$title.aac';
+      final path = '${dir!.path}/$title.aac';
       final dio = Dio();
       await dio.download(url, path,
         onReceiveProgress: (received, total) {
-          debugPrint('Download: \$received/\$total');
+          debugPrint('Download: $received/$total');
         });
       if (ctx.mounted) {
         ScaffoldMessenger.of(ctx).showSnackBar(
           SnackBar(
-            content: Text('✅ Saved to Downloads: \$title'),
+            content: Text('✅ Saved to Downloads: $title'),
             backgroundColor: kGreen,
             duration: const Duration(seconds: 3)));
       }
     } catch (e) {
-      debugPrint('Download error: \$e');
+      debugPrint('Download error: $e');
     }
   }
 
@@ -1640,8 +1649,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                     children: [
                       Text(bookName + ' ' +
                         (chapters.length == 1
-                          ? '\${chapters[0]}'
-                          : '\${chapters[0]}-\${chapters.last}'),
+                          ? '${chapters[0]}'
+                          : '${chapters[0]}-${chapters.last}'),
                         style: const TextStyle(
                           fontSize: 18, fontWeight: FontWeight.w800,
                           color: Colors.white)),
@@ -2098,10 +2107,10 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
         }
       }
     } catch (e) {
-      debugPrint('Recording upload error: \$e');
+      debugPrint('Recording upload error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Recording error: \$e')));
+          SnackBar(content: Text('Recording error: $e')));
       }
     }
     await FirebaseService.endMeeting(roomCode);
@@ -2124,7 +2133,7 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
       if (meetData != null) {
         final attRoom = meetData['roomCode'] ?? roomCode;
         final attUid = _user?.uid ?? 'unknown';
-        final attDocId = '\${attRoom}_\$attUid';
+        final attDocId = '${attRoom}_$attUid';
         final attRef = FirebaseFirestore.instance
           .collection('attendance').doc(attDocId);
         final attSnap = await attRef.get();
@@ -2139,13 +2148,13 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
           });
         }
       }
-    } catch (e) { debugPrint('Attendance error: \$e'); }
+    } catch (e) { debugPrint('Attendance error: $e'); }
 
     // Launch LiveKit Sanctuary
     if (!mounted) return;
     await Navigator.push(context, MaterialPageRoute(
       builder: (_) => LiveKitSanctuary(
-        roomName: 'Lifestones-\$roomCode',
+        roomName: 'Lifestones-$roomCode',
         participantName: _user?.displayName ?? 'Member',
         isModerator: role == 'pastor',
       )));
@@ -3028,13 +3037,13 @@ class _MessagesScreenState extends State<MessagesScreen> {
           await FirebaseFirestore.instance.collection('notifications').add({
             'token': token,
             'title': _user?.displayName ?? 'Member',
-            'body': text.length > 50 ? '\${text.substring(0, 50)}...' : text,
+            'body': text.length > 50 ? '${text.substring(0, 50)}...' : text,
             'type': 'chat',
             'createdAt': FieldValue.serverTimestamp(),
           });
         }
       }
-    } catch (e) { debugPrint('Notify error: \$e'); }
+    } catch (e) { debugPrint('Notify error: $e'); }
   }
 
   @override
@@ -5061,7 +5070,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 decoration: const BoxDecoration(
                                   color: kRed,
                                   shape: BoxShape.circle),
-                                child: Center(child: Text('\$count',
+                                child: Center(child: Text('$count',
                                   style: const TextStyle(
                                     color: kWhite, fontSize: 12,
                                     fontWeight: FontWeight.w800)))),
@@ -5315,4 +5324,227 @@ class _BibleReadingContentState extends State<_BibleReadingContent> {
                 })),
       ]);
   }
+
+
+// ── EVANGELISM ONBOARDING SCREEN ─────────────────────
+class OnboardingScreen extends StatefulWidget {
+  const OnboardingScreen({super.key});
+  @override
+  State<OnboardingScreen> createState() => _OnboardingScreenState();
+}
+
+class _OnboardingScreenState extends State<OnboardingScreen> {
+  final _formKey = GlobalKey<FormState>();
+  bool _loading = false;
+  bool _isStudent = false;
+  bool _isWorking = false;
+
+  final _nameCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _addressCtrl = TextEditingController();
+  final _schoolCtrl = TextEditingController();
+  final _schoolStateCtrl = TextEditingController();
+  final _courseCtrl = TextEditingController();
+  final _workplaceCtrl = TextEditingController();
+  final _cityCtrl = TextEditingController();
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _loading = true);
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        await FirebaseFirestore.instance
+          .collection('users').doc(uid).update({
+            'fullName': _nameCtrl.text.trim(),
+            'phone': _phoneCtrl.text.trim(),
+            'address': _addressCtrl.text.trim(),
+            'city': _cityCtrl.text.trim(),
+            'isStudent': _isStudent,
+            'schoolName': _isStudent ? _schoolCtrl.text.trim() : '',
+            'schoolState': _isStudent ? _schoolStateCtrl.text.trim() : '',
+            'courseOfStudy': _isStudent ? _courseCtrl.text.trim() : '',
+            'isWorking': _isWorking,
+            'workplace': _isWorking ? _workplaceCtrl.text.trim() : '',
+            'onboardingComplete': true,
+          });
+      }
+    } catch (e) { debugPrint('Onboarding error: $e'); }
+    setState(() => _loading = false);
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const MainShell()));
+    }
+  }
+
+  Widget _buildField(TextEditingController ctrl, String label,
+      {TextInputType? type, bool required = true}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextFormField(
+        controller: ctrl,
+        keyboardType: type,
+        style: const TextStyle(color: kText),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(color: kTextLight.withOpacity(0.7)),
+          filled: true,
+          fillColor: kMilk,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: kGold, width: 1.5))),
+        validator: required
+          ? (v) => v == null || v.isEmpty ? 'Please fill this' : null
+          : null));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: kMilkDeep,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 16),
+                // Header
+                Row(children: [
+                  Container(
+                    width: 48, height: 48,
+                    decoration: BoxDecoration(
+                      color: kGold.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(24)),
+                    child: const Icon(Icons.favorite,
+                      color: kGold, size: 24)),
+                  const SizedBox(width: 12),
+                  Expanded(child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Welcome to the Family',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: kText)),
+                      Text('One time setup',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: kTextLight.withOpacity(0.6))),
+                    ])),
+                ]),
+                const SizedBox(height: 16),
+                // Privacy notice
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: kGold.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: kGold.withOpacity(0.2))),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('🔒', style: TextStyle(fontSize: 18)),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'This information is strictly for evangelism and pastoral care. '
+                          'Only the Pastor can see your details — never shared publicly.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: kText.withOpacity(0.75),
+                            height: 1.5))),
+                    ])),
+                const SizedBox(height: 24),
+                const Text('Personal Details',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: kGoldDark)),
+                const SizedBox(height: 12),
+                _buildField(_nameCtrl, 'Full Name'),
+                _buildField(_phoneCtrl, 'Phone Number',
+                  type: TextInputType.phone),
+                _buildField(_addressCtrl, 'Home Address'),
+                _buildField(_cityCtrl, 'City / Area you live'),
+                const SizedBox(height: 8),
+                // Student toggle
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: kWhite,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: kGold.withOpacity(0.15))),
+                  child: Column(
+                    children: [
+                      Row(children: [
+                        const Expanded(child: Text('Are you a student?',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600, color: kText))),
+                        Switch(
+                          value: _isStudent,
+                          activeColor: kGold,
+                          onChanged: (v) => setState(() => _isStudent = v)),
+                      ]),
+                      if (_isStudent) ...[
+                        const SizedBox(height: 12),
+                        _buildField(_schoolCtrl, 'School Name'),
+                        _buildField(_schoolStateCtrl, 'State of School'),
+                        _buildField(_courseCtrl, 'Course of Study'),
+                      ],
+                    ])),
+                const SizedBox(height: 12),
+                // Working toggle
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: kWhite,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: kGold.withOpacity(0.15))),
+                  child: Column(
+                    children: [
+                      Row(children: [
+                        const Expanded(child: Text('Are you working?',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600, color: kText))),
+                        Switch(
+                          value: _isWorking,
+                          activeColor: kGold,
+                          onChanged: (v) => setState(() => _isWorking = v)),
+                      ]),
+                      if (_isWorking) ...[
+                        const SizedBox(height: 12),
+                        _buildField(_workplaceCtrl, 'Where do you work?'),
+                      ],
+                    ])),
+                const SizedBox(height: 32),
+                // Submit button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _loading ? null : _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kGold,
+                      foregroundColor: kWhite,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16))),
+                    child: _loading
+                      ? const SizedBox(
+                          width: 20, height: 20,
+                          child: CircularProgressIndicator(
+                            color: kWhite, strokeWidth: 2))
+                      : const Text('Enter the Sanctuary 🙏',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800)))),
+                const SizedBox(height: 32),
+              ])))));
+  }
+}
 }
