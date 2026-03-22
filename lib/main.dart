@@ -917,17 +917,6 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   }
 
   void _startAutoScroll() {
-    Future.delayed(const Duration(seconds: 10), () {
-      if (!mounted || _isPaused) { _startAutoScroll(); return; }
-      final next = (_currentPage + 1) % _scriptures.length;
-      _scriptureCtrl.animateToPage(next,
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut);
-      setState(() => _currentPage = next);
-      _startAutoScroll();
-    });
-  }
-
   @override
 
   String get _greeting {
@@ -940,7 +929,6 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kMilkDeep,
       body: SafeArea(
         child: RefreshIndicator(
           color: kGold,
@@ -5915,3 +5903,68 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ])))));
   }
 }
+
+
+  Widget _buildCounsellingAndGridSection() {
+    return Column(children: [
+      GestureDetector(
+        onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Counselling - Phase 2")),
+        ),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF4A90C4), Color(0xFF2F6EA5)],
+            ),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(children: [
+            Icon(Icons.healing, color: Colors.white, size: 24),
+            SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Counselling", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  SizedBox(height: 4),
+                  Text("Talk to Pastor privately", style: TextStyle(color: Colors.white70, fontSize: 12)),
+                ],
+              ),
+            ),
+          ]),
+        ),
+      ),
+      SizedBox(height: 14),
+      GridView.count(
+        crossAxisCount: 2,
+        shrinkWrap: true,
+        physics: NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 2.0,
+        children: [
+          _buildGridItem("📖", "Bible", () => _showBibleReadingDialog("Genesis", ["1", "2"], 1)),
+          _buildGridItem("🎵", "Hymns", () => _showHymn({})),
+          _buildGridItem("🙏", "Prayer", () => _submitPrayer()),
+          _buildGridItem("📢", "Announcements", () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Phase 2")))),
+        ],
+      ),
+    ]);
+  }
+
+  Widget _buildGridItem(String emoji, String label, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(12)),
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Text(emoji, style: TextStyle(fontSize: 24)),
+          SizedBox(height: 6),
+          Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+        ]),
+      ),
+    );
+  }
+
