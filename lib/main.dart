@@ -2888,64 +2888,181 @@ class _MembersScreenState extends State<MembersScreen> {
     final role = data['role'] ?? 'member';
     final photo = data['photoUrl'] ?? '';
     final email = data['email'] ?? '';
+
+    // Evangelism details - pastor only
+    final fullName = data['fullName'] ?? '';
+    final phone = data['phone'] ?? '';
+    final address = data['address'] ?? '';
+    final city = data['city'] ?? '';
+    final isStudent = data['isStudent'] == true;
+    final school = data['schoolName'] ?? '';
+    final schoolState = data['schoolState'] ?? '';
+    final course = data['courseOfStudy'] ?? '';
+    final isWorking = data['isWorking'] == true;
+    final workplace = data['workplace'] ?? '';
+
+    // Check if current user is pastor
+    final currentUserRole = FirebaseAuth.instance.currentUser?.uid != null
+      ? 'unknown' : 'member';
+    // We use StreamBuilder to get role
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+
     showModalBottomSheet(
       context: context,
       backgroundColor: kWhite,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 80, height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const LinearGradient(colors: [kGoldLight, kGold]),
-                border: Border.all(color: kGold, width: 2),
-                boxShadow: [BoxShadow(
-                  color: kGoldNeon.withOpacity(0.3),
-                  blurRadius: 16, spreadRadius: 2)]),
-              child: photo.isNotEmpty
-                ? ClipOval(child: CachedNetworkImage(
-                    imageUrl: photo, fit: BoxFit.cover))
-                : Center(child: Text(name[0].toUpperCase(),
-                    style: const TextStyle(color: kWhite,
-                      fontWeight: FontWeight.w800, fontSize: 32)))),
-            const SizedBox(height: 12),
-            Text(name, style: const TextStyle(fontSize: 22,
-              fontWeight: FontWeight.w800, color: kText)),
-            const SizedBox(height: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: kGold.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20)),
-              child: Text(role == 'pastor' ? '🎤 Pastor' : '🙏 Member',
-                style: const TextStyle(color: kGoldDark,
-                  fontWeight: FontWeight.w700, fontSize: 13))),
-            const SizedBox(height: 16),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: kMilk,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: kGold.withOpacity(0.15))),
-              child: Text(bio, style: TextStyle(fontSize: 14,
-                color: kText.withOpacity(0.8), height: 1.5))),
-            if (email.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(email, style: TextStyle(fontSize: 12,
-                color: kTextLight.withOpacity(0.5))),
-            ],
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
-    );
+      builder: (ctx) => StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance
+          .collection('users').doc(uid).snapshots(),
+        builder: (ctx, snap) {
+          final myRole = (snap.data?.data()
+            as Map<String,dynamic>?)?['role'] ?? 'member';
+          final isPastor = myRole == 'pastor';
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Profile header - visible to all
+                Center(child: Column(children: [
+                  Container(
+                    width: 80, height: 80,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        colors: [kGoldLight, kGold]),
+                      border: Border.all(color: kGold, width: 2),
+                      boxShadow: [BoxShadow(
+                        color: kGoldNeon.withOpacity(0.3),
+                        blurRadius: 16, spreadRadius: 2)]),
+                    child: photo.isNotEmpty
+                      ? ClipOval(child: CachedNetworkImage(
+                          imageUrl: photo, fit: BoxFit.cover))
+                      : Center(child: Text(name[0].toUpperCase(),
+                          style: const TextStyle(color: kWhite,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 32)))),
+                  const SizedBox(height: 12),
+                  Text(name, style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: kText)),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: kGold.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20)),
+                    child: Text(
+                      role == 'pastor' ? '🎤 Pastor' : '🙏 Member',
+                      style: const TextStyle(
+                        color: kGoldDark,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13))),
+                  const SizedBox(height: 16),
+                  // Bio - visible to all
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: kMilk,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: kGold.withOpacity(0.15))),
+                    child: Text(bio, style: TextStyle(
+                      fontSize: 14,
+                      color: kText.withOpacity(0.8),
+                      height: 1.5))),
+                  if (email.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(email, style: TextStyle(
+                      fontSize: 12,
+                      color: kTextLight.withOpacity(0.5))),
+                  ],
+                ])),
+
+                // PASTOR ONLY - evangelism details
+                if (isPastor) ...[
+                  const SizedBox(height: 24),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: kGold.withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: kGold.withOpacity(0.2))),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(children: [
+                            const Text('🔒',
+                              style: TextStyle(fontSize: 16)),
+                            const SizedBox(width: 8),
+                            const Text('Pastoral Details',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: kGoldDark)),
+                            const Spacer(),
+                            Text('Visible to Pastor only',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: kTextLight.withOpacity(0.5))),
+                          ])),
+                        const Divider(height: 1),
+                        _infoTile('Full Name', fullName),
+                        _infoTile('Phone', phone),
+                        _infoTile('Address', address),
+                        _infoTile('City', city),
+                        if (isStudent) ...[
+                          _infoTile('Student', 'Yes'),
+                          _infoTile('School', school),
+                          _infoTile('State', schoolState),
+                          _infoTile('Course', course),
+                        ] else
+                          _infoTile('Student', 'No'),
+                        if (isWorking) ...[
+                          _infoTile('Working', 'Yes'),
+                          _infoTile('Workplace', workplace),
+                        ] else
+                          _infoTile('Working', 'No'),
+                      ])),
+                ],
+                const SizedBox(height: 20),
+              ]));
+        }));
+  }
+
+  Widget _infoTile(String label, String value) {
+    if (value.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12, vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 90,
+            child: Text(label,
+              style: TextStyle(
+                fontSize: 12,
+                color: kTextLight.withOpacity(0.6),
+                fontWeight: FontWeight.w600))),
+          Expanded(
+            child: Text(value,
+              style: const TextStyle(
+                fontSize: 13,
+                color: kText,
+                fontWeight: FontWeight.w500))),
+        ]));
   }
 }
 
