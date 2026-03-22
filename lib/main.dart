@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'sanctuary_livekit.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -9,7 +10,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:jitsi_meet_flutter_sdk/jitsi_meet_flutter_sdk.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'dart:io';
 import 'dart:convert';
@@ -2184,61 +2184,38 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
       return;
     }
     try {
-      final jitsi = JitsiMeet();
       // Track attendance
-      try {
-        final meetDoc = await FirebaseFirestore.instance
-          .collection('meetings').doc('current_live').get();
-        final meetData = meetDoc.data();
-        if (meetData != null) {
-          final attRoom = meetData['roomCode'] ?? roomCode;
-          final attUid = _user?.uid ?? 'unknown';
-          final attDocId = '\${attRoom}_\$attUid';
-          final attRef = FirebaseFirestore.instance
-            .collection('attendance').doc(attDocId);
-          final attSnap = await attRef.get();
-          if (!attSnap.exists) {
-            await attRef.set({
-              'uid': attUid,
-              'name': _user?.displayName ?? 'Member',
-              'roomCode': attRoom,
-              'topic': meetData['topic'] ?? 'Lifestones Class',
-              'joinedAt': FieldValue.serverTimestamp(),
-              'role': role,
-            });
-          }
+      final meetDoc = await FirebaseFirestore.instance
+        .collection('meetings').doc('current_live').get();
+      final meetData = meetDoc.data();
+      if (meetData != null) {
+        final attRoom = meetData['roomCode'] ?? roomCode;
+        final attUid = _user?.uid ?? 'unknown';
+        final attDocId = '\${attRoom}_\$attUid';
+        final attRef = FirebaseFirestore.instance
+          .collection('attendance').doc(attDocId);
+        final attSnap = await attRef.get();
+        if (!attSnap.exists) {
+          await attRef.set({
+            'uid': attUid,
+            'name': _user?.displayName ?? 'Member',
+            'roomCode': attRoom,
+            'topic': meetData['topic'] ?? 'Lifestones Class',
+            'joinedAt': FieldValue.serverTimestamp(),
+            'role': role,
+          });
         }
-      } catch (e) { debugPrint('Attendance error: \$e'); }
+      }
+    } catch (e) { debugPrint('Attendance error: \$e'); }
 
-      await jitsi.join(JitsiMeetConferenceOptions(
-        serverURL: "https://meet.ffmuc.net",
-        room: 'Lifestones-$roomCode',
-        userInfo: JitsiMeetUserInfo(
-          displayName: _user?.displayName ?? 'Member',
-          email: _user?.email,
-        ),
-        configOverrides: {
-          'startWithAudioMuted': false,
-          'startWithVideoMuted': true,
-          'disableDeepLinking': true,
-          'prejoinPageEnabled': false,
-          'lobby.enabled': false,
-          'p2p.enabled': true,
-          'channelLastN': 10,
-        },
-        featureFlags: {
-          'recording.enabled': role == 'pastor',
-          'live-streaming.enabled': false,
-          'raise-hand.enabled': true,
-          'chat.enabled': true,
-          'pip.enabled': true,
-          'toolbox.alwaysVisible': true,
-          'invite.enabled': false,
-          'video-mute.enabled': false,
-          'meeting-password.enabled': false,
-        },
-      ));
-    } catch (e) { debugPrint('Join error: $e'); }
+    // Launch LiveKit Sanctuary
+    if (!mounted) return;
+    await Navigator.push(context, MaterialPageRoute(
+      builder: (_) => LiveKitSanctuary(
+        roomName: 'Lifestones-\$roomCode',
+        participantName: _user?.displayName ?? 'Member',
+        isModerator: role == 'pastor',
+      )));
   }
 
   void _shareLink(String roomCode) {
