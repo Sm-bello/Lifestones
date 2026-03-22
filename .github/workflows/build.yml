@@ -58,17 +58,8 @@ jobs:
           cp -r /tmp/backup/lib/. lib/
           cp /tmp/backup/google-services.json android/app/ 2>/dev/null || echo "no gservices"
 
-          # Fix WebRTC .so conflict via Python
-          python3 -c "
-f=open('android/app/build.gradle.kts','r');c=f.read();f.close()
-if 'pickFirsts' not in c:
-    p='packaging {\n        jniLibs {\n            pickFirsts += setOf(\"lib/arm64-v8a/libjingle_peerconnection_so.so\",\"lib/armeabi-v7a/libjingle_peerconnection_so.so\",\"lib/x86_64/libjingle_peerconnection_so.so\")\n        }\n    }\n    buildTypes {'
-    c=c.replace('buildTypes {',p,1)
-    f=open('android/app/build.gradle.kts','w');f.write(c);f.close()
-    print('pickFirsts patched!')
-else:
-    print('Already patched')
-" 
+          # Fix WebRTC .so conflict
+          python3 ci/fix_webrtc.py
           cp /tmp/backup/build.gradle.kts android/app/build.gradle.kts
           mkdir -p assets
           cp /tmp/backup/logo.png assets/logo.png 2>/dev/null || true
