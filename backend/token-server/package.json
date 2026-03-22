@@ -1,0 +1,9 @@
+{
+  "name": "lifestones-token-server",
+  "version": "1.0.0",
+  "main": "server.js",
+  "dependencies": {
+    "livekit-server-sdk": "^2.6.0",
+    "dotenv": "^16.0.0"
+  }
+}
