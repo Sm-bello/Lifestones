@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'counselling_system.dart';
 import 'sanctuary_livekit.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -770,8 +771,8 @@ class _MainShellState extends State<MainShell> {
     return Scaffold(
       backgroundColor: kMilk,
       body: _screens[_tab],
-      floatingActionButton: _buildResourcesFAB(context),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      // floatingActionButton removed,
+      // floatingActionButtonLocation removed,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: kWhite,
